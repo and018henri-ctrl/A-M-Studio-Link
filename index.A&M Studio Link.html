@@ -1,0 +1,3827 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+    <title>A&M Studio Link</title>
+
+    <!-- Favicon Fix -->
+
+    <link rel="icon" href="data:,">
+
+    
+
+    <!-- Tailwind CSS (via CDN) -->
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    
+
+    <!-- Lucide Icons (via CDN) -->
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+    <!-- Google Fonts -->
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+
+
+    <!-- Configuração Tailwind e Estilos Personalizados -->
+
+    <style>
+        /* Base e Reset */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #050505; 
+            color: white; 
+            overflow: hidden; 
+            height: 100dvh; /* Garante altura total no mobile */
+        }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Animações */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(1.2); opacity: 0; }
+        }
+        .animate-ring { animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
+
+        @keyframes float-up {
+            0% { transform: translateY(0) scale(0.5); opacity: 0; }
+            10% { opacity: 1; transform: translateY(-20px) scale(1.2); }
+            100% { transform: translateY(-200px) scale(1.5); opacity: 0; }
+        }
+        .reaction-emoji {
+            position: absolute;
+            font-size: 3rem;
+            pointer-events: none;
+            animation: float-up 2.5s ease-out forwards;
+            z-index: 100;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+        .video-mirror { transform: scaleX(-1); }
+        .no-mirror { transform: none !important; }
+
+        /* GRID SYSTEM */
+        .video-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-content: center;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            gap: 8px; /* Gap menor para mobile */
+            padding: 8px;
+        }
+
+        .video-card {
+            background-color: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .video-card video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+
+/* --- EFEITO NEON CORRIGIDO --- */
+.speaking {
+    /* Borda grossa azul */
+    border: 4px solid #3b82f6 !important;
+    
+    /* Brilho interno forte */
+    box-shadow: inset 0 0 30px rgba(59, 130, 246, 0.8) !important;
+    
+    /* Garante que fique sobre o vídeo */
+    z-index: 50;
+    
+    /* Transição suave */
+    transition: all 0.1s ease-in-out;
+    
+    /* Para debug visual se a borda não aparecer */
+    position: relative; 
+}
+
+
+/* --- ESTILOS DA LOGO E FUNDO (BRANDING) --- */
+        .brand-logo {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            height: 40px;       /* Tamanho fixo pequeno */
+            width: auto;        /* Proporcional */
+            object-fit: contain;
+            z-index: 50;        /* Acima de tudo */
+            pointer-events: none;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+        }
+
+        /* Ajuste para o card aceitar imagem de fundo */
+        .video-card {
+            background-color: #202124;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+/* --- REGRAS MOBILE (TELA < 768px) --- */
+        @media (max-width: 768px) {
+            .video-grid {
+                display: flex;
+                flex-direction: row; /* MUDEI: Agora é linha (lado a lado) */
+                flex-wrap: wrap;     /* MUDEI: Permite quebrar linha (subsequentes) */
+                width: 100%;
+                height: auto;
+                min-height: 100%;
+                padding-bottom: 100px;
+                overflow-y: visible;
+                align-content: flex-start; /* Começa do topo */
+                gap: 8px; /* Espaço entre os vídeos */
+            }
+
+            /* Regra para 2 ou mais pessoas (Lado a Lado) */
+            .video-card {
+                /* Cálculo: 50% da tela menos metade do espaço (gap) */
+                width: calc(50% - 4px) !important; 
+                height: auto !important;
+                aspect-ratio: 9/16; /* Formato de story/celular para caber o rosto todo */
+                max-height: 40vh;   /* Limita a altura para caber na tela */
+                flex-shrink: 0;
+                border-radius: 12px !important;
+                margin-bottom: 0;
+                border: 1px solid #27272a;
+                position: relative;
+            }
+            
+            /* Ajuste interno do vídeo para evitar zoom excessivo */
+            .video-card video {
+                width: 100%;
+                height: 100%;
+                object-fit: cover; /* Preenche o quadrado sem distorcer */
+            }
+
+            /* CASO ESPECIAL: Apenas 1 pessoa na sala (Fica Tela Cheia) */
+            .video-grid.grid-1 .video-card {
+                width: 100% !important; /* Ocupa largura total */
+                height: auto !important;
+                aspect-ratio: 9/16;     /* Mantém proporção de celular */
+                max-height: 75vh;       /* Altura máxima */
+            }
+        }
+     /* --- REGRAS DESKTOP (TELA > 769px) --- */
+        @media (min-width: 769px) {
+            .video-grid {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                align-items: center;
+                align-content: center;
+                width: 100%;
+                height: 100%;
+                padding: 16px;
+                padding-bottom: 90px;
+                gap: 16px;
+            }
+
+            .video-card {
+                background-color: #202124;
+                border-radius: 12px;
+                overflow: hidden;
+                position: relative;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+                transition: all 0.3s ease;
+            }
+
+            /* Cálculos de tamanho */
+            .video-grid.grid-1 .video-card { width: auto; height: 90%; aspect-ratio: 16/9; max-width: 100%; }
+            .video-grid.grid-2 .video-card { width: 48%; height: auto; aspect-ratio: 16/9; max-height: 80vh; }
+            .video-grid.grid-3 .video-card, .video-grid.grid-4 .video-card { width: 45%; height: 45%; max-height: 48vh; }
+            .video-grid.grid-5 .video-card, .video-grid.grid-6 .video-card { width: 32%; height: 45%; }
+
+            /* O vídeo preenche tudo normalmente */
+            .video-card video {
+                width: 100%;
+                height: 100%;
+                object-fit: contain; 
+                background-color: #202124;
+            }
+        }
+
+
+
+        .video-card-controls { opacity: 0; transition: opacity 0.2s ease; }
+        .video-card:hover .video-card-controls { opacity: 1; }
+        @media (max-width: 768px) { .video-card-controls { opacity: 1; } }
+
+/* --- NOVO CÓDIGO CORRIGIDO (LIMITADO AO MOBILE) --- */
+
+/* --- CSS CORRIGIDO: POSIÇÃO INICIAL INFERIOR DIREITA --- */
+
+/* Regras apenas para celular */
+/* Regras apenas para celular */
+@media (max-width: 768px) {
+    #draggable-wrapper {
+        position: fixed;
+        /* MUDANÇA AQUI: Subi de 30px para 150px */
+        bottom: 150px !important; 
+        right: 20px !important;
+        top: auto !important;
+        left: auto !important;
+        
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        touch-action: none;
+    }
+}
+
+/* Regra de segurança para Computador (Força sumir) */
+@media (min-width: 769px) {
+    #draggable-wrapper {
+        display: none !important;
+    }
+}
+
+/* Regra de segurança para Computador (Força sumir) */
+@media (min-width: 769px) {
+    #draggable-wrapper {
+        display: none !important;
+    }
+}
+
+.mobile-menu-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.5);
+    cursor: grab; /* Ícone de mãozinha */
+    transition: transform 0.2s; /* Apenas animação de clique */
+}
+.mobile-menu-btn:active { cursor: grabbing; transform: scale(0.95); }
+
+/* O painel agora é relativo ao wrapper, não à tela */
+.mobile-controls-panel {
+    margin-bottom: 10px; /* Espaço entre menu e botão */
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    align-items: center;
+}
+.mobile-controls-panel.open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+        .mobile-action-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #18181b;
+            border: 1px solid #27272a;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .calendar-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 0.875rem; cursor: pointer; transition: all 0.2s; }
+        .calendar-day:hover:not(.disabled) { background-color: #27272a; }
+        .calendar-day.selected { background-color: #2563eb; color: white; font-weight: bold; }
+        .calendar-day.disabled { color: #52525b; cursor: not-allowed; }
+        .calendar-day.today { border: 1px solid #3b82f6; }
+
+/* --- EFEITO NEON DE VOZ ATIVA --- */
+.speaking {
+    /* Borda sólida azul brilhante */
+    border: 3px solid #3b82f6 !important;
+    
+    /* Sombra INTERNA para não ser cortada pelo card */
+    box-shadow: inset 0 0 30px rgba(59, 130, 246, 0.8) !important;
+    
+    /* Garante que fique acima de outros elementos */
+    z-index: 50;
+    
+    /* Animação suave para não piscar demais */
+    transition: all 0.1s ease-in-out;
+}
+
+
+
+    </style>
+
+</head>
+
+<body class="flex flex-col h-full relative bg-[#050505]">
+
+
+
+    <!-- Background -->
+
+    <div class="absolute inset-0 pointer-events-none overflow-hidden">
+
+        <div class="absolute bg-blue-600/10 w-[80vw] h-[80vw] rounded-full blur-[100px] top-[-20%] right-[-20%]"></div>
+
+        <div class="absolute bg-purple-900/10 w-[80vw] h-[80vw] rounded-full blur-[100px] bottom-[-20%] left-[-20%]"></div>
+
+    </div>
+
+
+
+    <!-- Container de Reações -->
+
+    <div id="reaction-container" class="absolute inset-0 pointer-events-none overflow-hidden z-[60]"></div>
+
+
+
+    <!-- ==================== VIEW: HOME ==================== -->
+
+    <div id="view-home" class="flex flex-col h-full w-full z-10 transition-opacity duration-500 overflow-hidden">
+
+        <!-- Header Fixo -->
+
+        <header class="flex justify-between items-center p-4 md:p-6 border-b border-white/5 backdrop-blur-sm bg-[#050505]/80 z-20 shrink-0 text-white">
+
+            <div class="flex items-center gap-2 md:gap-3">
+
+                <div class="bg-blue-600/10 border border-blue-500/20 p-1.5 rounded-lg">
+
+                    <i data-lucide="clapperboard" class="text-blue-500 w-5 h-5 md:w-6 md:h-6"></i>
+
+                </div>
+
+                <span class="text-lg md:text-xl font-bold tracking-tight text-white">A&M <span class="font-light text-blue-500">Produções</span></span>
+
+            </div>
+
+            <div class="text-right hidden md:block text-white">
+
+                <div id="home-date" class="text-sm font-bold text-zinc-400">--/--/--</div>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- Conteúdo com Scroll -->
+
+        <main class="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-8 text-white">
+
+            <div class="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8 lg:gap-12 items-start text-white">
+
+                
+
+                <!-- Esquerda: Ações -->
+
+                <div class="flex-1 space-y-6 w-full lg:sticky lg:top-8 text-white text-white">
+
+                    <div>
+
+                        <h1 class="text-3xl md:text-5xl lg:text-6xl font-bold leading-tight text-white mb-2 md:mb-4">
+
+                            Studio <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400 text-white">Link</span>
+
+                        </h1>
+
+                        <p class="text-sm md:text-base text-zinc-400 font-light border-l-2 border-blue-500 pl-4 text-white">
+
+                            Conexão profissional simplificada para todos os dispositivos.
+
+                        </p>
+
+                    </div>
+
+                    
+
+                    <div class="flex flex-col gap-3">
+
+                        <div class="flex flex-col sm:flex-row gap-3">
+
+                            <!-- Botão Nova Sala (Protegido) -->
+
+                            <button onclick="app.checkAdmin('create')" class="flex-1 flex items-center justify-center gap-2 bg-blue-600 active:bg-blue-700 text-white px-6 py-4 rounded-xl font-bold shadow-lg shadow-blue-900/20 transition-transform active:scale-95 text-base md:text-lg">
+
+                                <i data-lucide="video" class="w-5 h-5 md:w-6 md:h-6"></i> Nova Sala
+
+                            </button>
+
+                            <!-- Botão Agendar (Protegido) -->
+
+                            <button onclick="app.checkAdmin('schedule')" class="flex-1 flex items-center justify-center gap-2 bg-zinc-800 text-white px-6 py-4 rounded-xl font-semibold border border-zinc-700 transition-all active:scale-95 hover:bg-zinc-700 text-base md:text-lg">
+
+                                <i data-lucide="calendar-plus" class="w-5 h-5 md:w-6 md:h-6"></i> Agendar
+
+                            </button>
+
+                        </div>
+
+
+
+                        <div class="flex items-center gap-2 bg-zinc-900/50 p-2 rounded-xl border border-white/10 w-full focus-within:border-blue-500/50 transition-colors mt-2 text-white text-white">
+
+                            <i data-lucide="keyboard" class="ml-2 text-zinc-500 w-5 h-5 md:w-6 md:h-6 text-white text-white"></i>
+
+                            <input id="input-code" type="text" placeholder="Código da sala" class="bg-transparent border-none text-white focus:outline-none w-full font-mono uppercase tracking-widest p-2 text-base md:text-lg text-white">
+
+                            <button onclick="app.joinMeetingFromHome()" class="px-6 py-2 bg-zinc-800 rounded-lg text-zinc-300 font-medium active:bg-zinc-700 text-sm md:text-base text-white">Ir</button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- Direita: Lista de Reuniões -->
+
+                <div class="flex-1 w-full text-white">
+
+                    <div class="bg-zinc-900/30 border border-zinc-800 rounded-2xl p-4 md:p-6 backdrop-blur-sm h-[450px] md:h-[500px] flex flex-col text-white">
+
+                        <div class="flex justify-between items-center mb-4 shrink-0 text-white">
+
+                            <h3 class="text-lg md:text-xl font-bold text-white flex items-center gap-2 text-white">
+
+                                <i data-lucide="calendar" class="text-blue-500 w-5 h-5 md:w-6 md:h-6 text-white"></i> Suas Reuniões
+
+                            </h3>
+
+                            <button onclick="app.confirmClearAll()" class="text-red-500 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-colors text-white" title="Excluir Todas">
+
+                                <i data-lucide="trash-2" class="w-5 h-5 text-white"></i>
+
+                            </button>
+
+                        </div>
+
+                        
+
+                        <div id="meetings-list" class="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-2 text-white text-white">
+
+                            <p class="text-zinc-500 text-sm text-center py-10 text-white">A carregar reuniões...</p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+
+
+    <!-- MODAL: LOGIN ADMIN -->
+
+    <div id="modal-admin-login" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 text-white">
+
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95 duration-200 text-center text-white">
+
+            <button onclick="app.closeModal('modal-admin-login')" class="absolute top-4 right-4 text-zinc-500 hover:text-white text-white"><i data-lucide="x"></i></button>
+
+            <div class="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/20 text-white">
+
+                <i data-lucide="shield-check" class="text-blue-500 w-8 h-8 text-white"></i>
+
+            </div>
+
+            <h3 class="text-xl font-bold text-white text-center text-white">Acesso Admin</h3>
+
+            <p class="text-zinc-400 text-sm mt-2 mb-6 text-center text-white">Digite o e-mail autorizado para criar reuniões.</p>
+
+            
+
+            <input id="admin-email-input" type="email" placeholder="seu@email.com" class="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none text-sm mb-4 text-white text-center">
+
+            
+
+            <button onclick="app.submitAdminLogin()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 text-white text-white">
+
+                Verificar
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- MODAL: CONFIRMAR EXCLUSÃO GERAL -->
+
+    <div id="modal-delete-confirm" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 text-white">
+
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-sm shadow-2xl relative animate-in zoom-in-95 duration-200 text-center text-white">
+
+            <div class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20 text-white">
+
+                <i data-lucide="alert-triangle" class="text-red-500 w-8 h-8 text-white"></i>
+
+            </div>
+
+            <h3 class="text-xl font-bold text-white text-center text-white">Excluir tudo?</h3>
+
+            <p class="text-zinc-400 text-sm mt-2 mb-6 text-center text-white">Isso apagará permanentemente todas as suas reuniões agendadas.</p>
+
+            <div class="flex gap-2 text-white text-white">
+
+                <button onclick="app.closeModal('modal-delete-confirm')" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-lg transition-colors text-white">Cancelar</button>
+
+                <button onclick="app.clearAllMeetings()" class="flex-1 bg-red-600 font-bold py-3 rounded-lg transition-colors text-white text-white">Excluir</button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- MODAL: AGENDAR REUNIÃO -->
+
+    <div id="modal-schedule" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 text-white">
+
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-2xl shadow-2xl relative flex flex-col md:flex-row max-h-[90vh] overflow-hidden text-white">
+
+            <div class="p-4 border-b border-zinc-800 flex justify-between items-center md:absolute md:top-0 md:right-0 md:border-none md:z-10 text-white">
+
+                <span class="md:hidden font-bold text-white">Agendar</span>
+
+                <button onclick="app.closeModal('modal-schedule')" class="text-zinc-500 hover:text-white p-2 text-white"><i data-lucide="x"></i></button>
+
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col md:flex-row gap-6 text-white text-white">
+
+                <div class="flex-1 text-white">
+
+                    <div class="bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-white text-white">
+
+                        <div class="flex justify-between items-center mb-4 text-white text-white text-white">
+
+                            <button onclick="app.changeMonth(-1)" class="p-1 hover:bg-zinc-800 rounded text-white text-white text-white"><i data-lucide="chevron-left" class="w-5 h-5 text-white"></i></button>
+
+                            <span id="calendar-month-year" class="font-bold capitalize text-sm text-white text-white">Mês Ano</span>
+
+                            <button onclick="app.changeMonth(1)" class="p-1 hover:bg-zinc-800 rounded text-white text-white text-white"><i data-lucide="chevron-right" class="w-5 h-5 text-white"></i></button>
+
+                        </div>
+
+                        <div class="grid grid-cols-7 gap-1 mb-2 text-center text-xs text-zinc-500 font-bold uppercase text-white text-white">
+
+                            <div>D</div><div>S</div><div>T</div><div>Q</div><div>Q</div><div>S</div><div>S</div>
+
+                        </div>
+
+                        <div id="calendar-grid" class="calendar-grid text-white text-white"></div>
+
+                    </div>
+
+                </div>
+
+                <div class="flex-1 flex flex-col gap-4 text-white text-white">
+
+                    <div>
+
+                        <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-2 text-white text-white"><i data-lucide="clock" class="text-blue-500 w-4 h-4 text-white"></i> Horário</h3>
+
+                        <div id="time-slots" class="grid grid-cols-3 gap-2 max-h-[150px] overflow-y-auto custom-scrollbar pr-1 text-white text-white"></div>
+
+                    </div>
+
+                    <div class="mt-auto text-white text-white">
+
+                        <label class="block text-xs text-zinc-400 mb-1 text-white text-left text-white text-white">Nome do Convidado</label>
+
+                        <input id="schedule-guest" type="text" placeholder="Ex: Cliente" class="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none text-sm mb-4 text-white">
+
+                        <button onclick="app.confirmSchedule()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 text-white text-white">Confirmar</button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- MODAL: CONVITE GERADO -->
+
+    <div id="modal-invite" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 text-white">
+
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-md shadow-2xl relative animate-in zoom-in-95 duration-200 text-white text-center text-white">
+
+            <button onclick="app.closeModal('modal-invite')" class="absolute top-4 right-4 text-zinc-500 hover:text-white text-white"><i data-lucide="x"></i></button>
+
+            <div class="text-center mb-6 text-white text-white">
+
+                <div class="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-3 border border-green-500/20 text-white">
+
+                    <i data-lucide="check" class="text-green-500 w-6 h-6 text-white"></i>
+
+                </div>
+
+                <h3 class="text-lg font-bold text-white text-white text-white">Reunião Registrada!</h3>
+
+            </div>
+
+            <div class="bg-zinc-950 border border-zinc-800 rounded-lg p-3 mb-4 text-white text-white text-white">
+
+                <p class="text-[10px] text-zinc-500 mb-2 uppercase font-bold text-white text-left text-white">Mensagem Pronta:</p>
+
+                <textarea id="invite-text" readonly class="w-full h-24 bg-transparent text-xs text-zinc-300 resize-none outline-none font-mono leading-relaxed text-white text-white"></textarea>
+
+            </div>
+
+            <div class="flex flex-col gap-2 text-white">
+
+                <button onclick="app.copyInviteText()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-lg text-sm border border-zinc-700 flex items-center justify-center gap-2 text-white text-white">
+
+                    <i data-lucide="copy" class="w-4 h-4 text-white"></i> Copiar Convite
+
+                </button>
+
+                <div class="flex gap-2 text-white text-white text-white">
+
+                    <button onclick="app.closeModal('modal-invite')" class="flex-1 bg-zinc-700 text-white font-bold py-3 rounded-lg text-sm text-white">Agendar</button>
+
+                    <button onclick="app.startScheduledMeeting()" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-lg text-sm text-white">Iniciar Agora</button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ==================== VIEW: LOBBY ==================== -->
+
+    <div id="view-lobby" class="hidden flex flex-col h-full z-10 bg-[#050505] overflow-hidden text-white">
+
+        <header class="p-4 border-b border-white/5 flex justify-between items-center backdrop-blur-sm shrink-0 text-white">
+
+            <span class="font-bold text-lg flex items-center gap-2 text-white text-white text-white">
+
+                <i data-lucide="clapperboard" class="text-blue-500 w-5 h-5 text-white"></i> A&M Studio
+
+            </span>
+
+            <span id="lobby-code" class="font-mono text-zinc-400 text-xs bg-zinc-900 px-2 py-1 rounded border border-white/10 text-white">...</span>
+
+        </header>
+
+
+
+        <main class="flex-1 flex flex-col items-center justify-center p-4 gap-4 w-full max-w-lg mx-auto overflow-y-auto text-white">
+
+            <div class="relative w-full aspect-video bg-zinc-900 rounded-2xl overflow-hidden shadow-2xl border border-zinc-800 shrink-0 text-white text-white">
+
+                <video id="lobby-video" autoplay muted playsinline webkit-playsinline class="w-full h-full object-cover video-mirror text-white"></video>
+
+                <div id="lobby-video-placeholder" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-zinc-950 text-zinc-500 text-white text-white text-white">
+
+                    <div class="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center mb-2 border border-zinc-800 text-white">
+
+                        <i data-lucide="video-off" class="w-6 h-6 text-white text-white text-white"></i>
+
+                    </div>
+
+                    <span class="text-xs text-white text-white">Câmera Desligada</span>
+
+                </div>
+
+                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-4 z-20 text-white text-white text-white">
+
+                    <button onclick="app.toggleAudio()" id="btn-lobby-mic" class="p-3 rounded-full bg-zinc-800/80 text-white border border-zinc-600 backdrop-blur-md active:scale-95 transition-all text-white">
+
+                        <i data-lucide="mic" class="w-6 h-6 text-white text-white"></i>
+
+                    </button>
+
+                    <button onclick="app.toggleVideo()" id="btn-lobby-cam" class="p-3 rounded-full bg-zinc-800/80 text-white border border-zinc-600 backdrop-blur-md active:scale-95 transition-all text-white">
+
+                        <i data-lucide="video" class="w-6 h-6 text-white text-white"></i>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+            <div class="flex gap-2 w-full shrink-0 text-white">
+
+                <div class="flex-1 overflow-hidden text-white">
+
+                    <label class="text-[10px] text-zinc-500 uppercase font-bold px-1 mb-1 block truncate text-white text-white text-white text-white text-white text-white text-white"><i data-lucide="mic" class="w-3 h-3 inline text-white"></i> Microfone</label>
+
+                    <select id="audioSource" onchange="app.changeDevice()" class="w-full bg-zinc-900 text-xs p-2.5 md:p-3 rounded-lg border border-zinc-800 outline-none focus:border-blue-500 truncate appearance-none text-white text-white text-white"></select>
+
+                </div>
+
+                <div class="flex-1 overflow-hidden text-white">
+
+                    <label class="text-[10px] text-zinc-500 uppercase font-bold px-1 mb-1 block truncate text-white text-white text-white text-white text-white text-white text-white"><i data-lucide="video" class="w-3 h-3 inline text-white"></i> Câmera</label>
+
+                    <select id="videoSource" onchange="app.changeDevice()" class="w-full bg-zinc-900 text-xs p-2.5 md:p-3 rounded-lg border border-zinc-800 outline-none focus:border-blue-500 truncate appearance-none text-white text-white text-white"></select>
+
+                </div>
+
+            </div>
+
+            <div class="w-full space-y-3 shrink-0 text-white text-white">
+
+                <div class="bg-zinc-900/50 p-2.5 md:p-3 rounded-xl border border-zinc-800 text-white">
+
+                    <label class="text-[10px] text-zinc-500 block mb-1 uppercase font-bold px-1 text-white text-left text-white text-white text-white text-white">Seu Nome</label>
+
+                    <input id="lobby-name-input" type="text" placeholder="Digite..." class="w-full bg-transparent border-none text-white text-base md:text-lg focus:outline-none px-1 font-medium text-white">
+
+                </div>
+
+                <button onclick="app.requestEntry()" class="w-full bg-blue-600 text-white py-3.5 md:py-4 rounded-xl font-bold text-base md:text-lg flex items-center justify-center gap-2 text-white text-white text-white">Entrar Agora</button>
+
+            </div>
+
+        </main>
+
+    </div>
+
+
+
+    <!-- ==================== VIEW: WAITING ROOM ==================== -->
+
+    <div id="view-waiting" class="hidden flex flex-col h-full z-10 items-center justify-center bg-zinc-950 p-6 text-center text-white">
+
+        <div class="relative w-20 h-20 mb-6 text-white text-white text-white text-white text-white">
+
+            <div class="absolute inset-0 bg-blue-500/20 rounded-full animate-ping text-white text-white text-white text-white text-white"></div>
+
+            <div class="relative w-20 h-20 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center z-10 text-white text-white text-white">
+
+                <i data-lucide="clock" class="text-blue-500 w-8 h-8 text-white"></i>
+
+            </div>
+
+        </div>
+
+        <h2 class="text-xl font-bold mb-2 text-white text-white text-white">Aguardando...</h2>
+
+        <p class="text-zinc-500 text-sm max-w-xs mx-auto text-white">O anfitrião logo permitirá sua entrada.</p>
+
+    </div>
+
+
+
+   <div id="view-meeting" class="hidden flex flex-col h-full z-10 overflow-hidden bg-[#0a0a0a] relative">
+        
+        <header class="absolute top-0 left-0 right-0 h-14 bg-gradient-to-b from-black/80 to-transparent z-50 flex items-start p-4 pointer-events-none">
+             <div class="pointer-events-auto bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
+                 <span class="text-[10px] font-mono text-zinc-400 uppercase tracking-widest">Sala:</span>
+                 <span id="header-room-code" class="text-xs font-bold text-white tracking-widest">...</span>
+                 <button onclick="app.copyLink()" class="ml-1 text-white"><i data-lucide="copy" class="w-3 h-3"></i></button>
+             </div>
+        </header>
+
+        <div class="flex-1 flex flex-row overflow-hidden relative w-full min-h-0 text-white">
+            
+            <div class="flex-1 relative overflow-hidden flex flex-col items-center justify-center min-h-0 bg-[#0a0a0a] text-white">
+                <div id="video-grid-container" class="w-full h-full max-w-full max-h-full flex flex-col overflow-y-auto custom-scrollbar relative">
+    <div id="video-grid" class="video-grid grid-1 text-white">
+                        <div id="local-card" class="video-card">
+                            <video id="meeting-video" autoplay muted playsinline webkit-playsinline class="video-mirror"></video>
+                            <div class="absolute left-2 bottom-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold text-white z-20">Você</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="sidebar" class="hidden w-full md:w-80 h-full bg-[#0a0a0a]/98 backdrop-blur-xl border-l border-zinc-800 absolute right-0 top-0 md:relative z-[60] shadow-2xl flex flex-col transition-all text-white">
+                <div class="p-3 border-b border-zinc-800 flex justify-between items-center shrink-0 text-white">
+                    <h3 id="sidebar-title" class="text-sm font-bold text-white uppercase tracking-wider text-center">Painel</h3>
+                    <button onclick="app.closeSidebar()" class="p-2 hover:bg-zinc-800 rounded-full text-zinc-400 text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                
+                <div id="sidebar-content-info" class="hidden p-4 space-y-4 overflow-y-auto custom-scrollbar flex-1 text-white">
+                    <div>
+                        <h4 class="text-[10px] text-zinc-500 font-bold mb-1 uppercase">Link de Acesso</h4>
+                        <div onclick="app.copyLink()" class="bg-zinc-900/50 p-3 rounded-lg border border-zinc-800 flex items-center gap-2 cursor-pointer active:bg-zinc-800">
+                            <span id="meeting-link-text" class="text-xs font-mono truncate flex-1 text-zinc-400">...</span>
+                            <i data-lucide="copy" class="w-4 h-4 text-blue-500"></i>
+                        </div>
+                    </div>
+
+                    <div id="host-controls" class="hidden pt-4 border-t border-zinc-800">
+                        <h4 class="text-[10px] text-zinc-500 font-bold mb-2 uppercase">Controle de Sala</h4>
+                        <button onclick="app.toggleAutoAdmit()" id="btn-auto-admit" class="w-full flex items-center justify-between p-3 rounded-lg bg-zinc-900 border border-zinc-800 text-sm">
+                            <span>Entrada Automática</span>
+                            <i id="icon-auto-admit" data-lucide="lock" class="w-4 h-4 text-red-500"></i>
+                        </button>
+                    </div>
+
+                    <div class="pt-4 border-t border-zinc-800">
+                        <h4 class="text-[10px] text-blue-400 font-bold mb-3 uppercase flex items-center gap-2">
+                            <i data-lucide="palette" class="w-3 h-3"></i> Personalização
+                        </h4>
+                        
+                        <div class="mb-3">
+                            <label class="text-xs text-zinc-400 mb-1 block">Logo da Empresa</label>
+                            <label class="flex items-center gap-2 w-full bg-zinc-900 p-2 rounded-lg border border-zinc-800 cursor-pointer hover:border-blue-500 transition-colors">
+                                <div class="bg-zinc-800 p-1.5 rounded">
+                                    <i data-lucide="image-plus" class="w-4 h-4 text-white"></i>
+                                </div>
+                                <span class="text-xs text-zinc-300 truncate flex-1" id="lbl-logo-name">Escolher Logo...</span>
+                                <input type="file" accept="image/*" class="hidden" onchange="app.updateBranding('logo', this)">
+                            </label>
+                        </div>
+
+                        <div>
+                            <label class="text-xs text-zinc-400 mb-1 block">Imagem de Fundo</label>
+                            <label class="flex items-center gap-2 w-full bg-zinc-900 p-2 rounded-lg border border-zinc-800 cursor-pointer hover:border-blue-500 transition-colors">
+                                <div class="bg-zinc-800 p-1.5 rounded">
+                                    <i data-lucide="wallpaper" class="w-4 h-4 text-white"></i>
+                                </div>
+                                <span class="text-xs text-zinc-300 truncate flex-1" id="lbl-bg-name">Escolher Fundo...</span>
+                                <input type="file" accept="image/*" class="hidden" onchange="app.updateBranding('background', this)">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+                <div id="sidebar-content-people" class="hidden flex-1 p-4 overflow-y-auto custom-scrollbar text-white">
+                    <div id="waiting-section" class="hidden mb-4 text-center">
+                        <h4 class="text-[10px] text-yellow-500 font-bold mb-2 uppercase">Aguardando</h4>
+                        <div id="waiting-list" class="space-y-2"></div>
+                    </div>
+                    <h4 class="text-[10px] text-zinc-500 font-bold mb-2 uppercase text-center">Participantes</h4>
+                    <div id="participants-list" class="space-y-2"></div>
+                </div>
+
+                 <div id="sidebar-content-chat" class="hidden flex-1 flex flex-col h-full w-full bg-[#0a0a0a] relative">
+                    <div class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3 w-full pb-20" id="chat-messages">
+                        <div class="text-center py-4"><span class="bg-zinc-800/50 text-zinc-500 text-[10px] px-3 py-1 rounded-full">Início</span></div>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 p-3 bg-[#0a0a0a] border-t border-zinc-800 z-20">
+                        <form onsubmit="app.sendChatMessage(event)" class="flex gap-2 items-center">
+                            <input id="chat-input" type="text" placeholder="Mensagem..." class="flex-1 bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white outline-none" autocomplete="off">
+                            <button type="submit" class="bg-blue-600 p-3 rounded-xl text-white"><i data-lucide="send" class="w-5 h-5"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="md:hidden" id="draggable-wrapper">
+    <div id="mobile-controls" class="mobile-controls-panel">
+        <button onclick="app.leaveRoom()" class="mobile-action-btn bg-red-600 border-red-600"><i data-lucide="phone-off" class="w-5 h-5"></i></button>
+        <button onclick="app.toggleAudio()" id="btn-mob-mic" class="mobile-action-btn"><i data-lucide="mic" class="w-5 h-5"></i></button>
+        <button onclick="app.toggleVideo()" id="btn-mob-cam" class="mobile-action-btn"><i data-lucide="video" class="w-5 h-5"></i></button>
+        <button onclick="app.toggleBlur()" id="btn-mob-blur" class="mobile-action-btn"><i data-lucide="aperture" class="w-5 h-5"></i></button>
+        <button onclick="app.toggleHand()" id="btn-mob-hand" class="mobile-action-btn bg-zinc-800 border-zinc-700 text-white">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M10.5 2a1.5 1.5 0 0 0-1.5 1.5v6.25H8.5V3.5a1.5 1.5 0 0 0-3 0v6.25h-.5a2.5 2.5 0 0 0-2.5 2.5v1.28c0 3.73 2.55 6.94 6.2 7.42a7.5 7.5 0 0 0 7.8-7.45V9a1.5 1.5 0 0 0-3 0v.75h-.5V3.5a1.5 1.5 0 0 0-3 0V2z"/></svg>
+        </button>
+        <button onclick="app.toggleScreenShare()" class="mobile-action-btn"><i data-lucide="monitor-up" class="w-5 h-5"></i></button>
+        <button onclick="app.toggleSidebar('chat')" class="mobile-action-btn relative">
+            <i data-lucide="message-square" class="w-5 h-5"></i>
+            <span id="chat-badge-mob" class="absolute top-0 right-0 w-2.5 h-2.5 bg-blue-500 rounded-full hidden"></span>
+        </button>
+        <button onclick="app.toggleSidebar('people')" class="mobile-action-btn relative">
+            <i data-lucide="users" class="w-5 h-5"></i>
+            <span id="badge-count-mob" class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-600 rounded-full hidden"></span>
+        </button>
+        <button onclick="app.toggleSidebar('info')" class="mobile-action-btn"><i data-lucide="palette" class="w-5 h-5"></i></button>
+    </div>
+
+    <button onclick="app.toggleMobileMenu()" id="mobile-menu-trigger" class="mobile-menu-btn">
+        <i data-lucide="plus" class="w-8 h-8 text-white"></i>
+    </button>
+</div>
+
+       <footer class="hidden md:flex fixed bottom-6 left-1/2 -translate-x-1/2 z-[80] items-center justify-center">
+            
+            <div class="flex items-center gap-4 bg-zinc-900/90 backdrop-blur-xl border border-white/10 px-6 py-3 rounded-full shadow-2xl transition-all hover:bg-zinc-900 hover:scale-105">
+                
+                <button onclick="app.toggleAudio()" id="btn-meet-mic" class="p-4 rounded-full bg-zinc-800 text-white hover:bg-zinc-700 transition-all w-14 h-14 flex justify-center items-center shadow-lg group">
+                    <i data-lucide="mic" class="w-6 h-6 group-active:scale-90 transition-transform"></i>
+                </button>
+                
+                <button onclick="app.toggleVideo()" id="btn-meet-cam" class="p-4 rounded-full bg-zinc-800 text-white hover:bg-zinc-700 transition-all w-14 h-14 flex justify-center items-center shadow-lg group">
+                    <i data-lucide="video" class="w-6 h-6 group-active:scale-90 transition-transform"></i>
+                </button>
+
+                <div class="w-px h-8 bg-white/20 mx-1"></div>
+
+                <button onclick="app.toggleScreenShare()" id="btn-screen-share" class="p-4 rounded-full bg-zinc-800 text-white hover:bg-zinc-700 transition-all w-14 h-14 flex justify-center items-center shadow-lg" title="Compartilhar Tela">
+                    <i data-lucide="monitor-up" class="w-6 h-6"></i>
+                </button>
+                
+                <button onclick="app.toggleBlur()" id="btn-blur" class="p-4 rounded-full bg-zinc-800 text-white hover:bg-zinc-700 transition-all w-14 h-14 flex justify-center items-center shadow-lg" title="Desfocar Fundo">
+                    <i data-lucide="aperture" class="w-6 h-6"></i>
+                </button>
+
+                <button onclick="app.toggleEmoji()" class="p-4 rounded-full bg-zinc-800 text-white hover:bg-zinc-700 transition-all w-14 h-14 relative flex justify-center items-center shadow-lg">
+                    <i data-lucide="smile" class="w-6 h-6"></i>
+                    <div id="emoji-menu" class="hidden absolute bottom-[140%] left-1/2 -translate-x-1/2 bg-zinc-900 border border-zinc-700 rounded-full p-3 flex gap-3 shadow-2xl z-[100] whitespace-nowrap animate-in fade-in slide-in-from-bottom-2">
+                        <span onclick="app.sendReaction('👍')" class="text-2xl cursor-pointer hover:scale-125 transition-transform p-1">👍</span>
+                        <span onclick="app.sendReaction('❤️')" class="text-2xl cursor-pointer hover:scale-125 transition-transform p-1">❤️</span>
+                        <span onclick="app.sendReaction('😂')" class="text-2xl cursor-pointer hover:scale-125 transition-transform p-1">😂</span>
+                        <span onclick="app.sendReaction('👏')" class="text-2xl cursor-pointer hover:scale-125 transition-transform p-1">👏</span>
+                    </div>
+                </button>
+
+               <button onclick="app.toggleHand()" id="btn-meet-hand" class="p-4 rounded-full bg-zinc-800 text-white hover:bg-zinc-700 transition-all w-14 h-14 flex justify-center items-center shadow-lg">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+        <path d="M10.5 2a1.5 1.5 0 0 0-1.5 1.5v6.25H8.5V3.5a1.5 1.5 0 0 0-3 0v6.25h-.5a2.5 2.5 0 0 0-2.5 2.5v1.28c0 3.73 2.55 6.94 6.2 7.42a7.5 7.5 0 0 0 7.8-7.45V9a1.5 1.5 0 0 0-3 0v.75h-.5V3.5a1.5 1.5 0 0 0-3 0V2z"/>
+    </svg>
+</button>
+
+                <div class="w-px h-8 bg-white/20 mx-1"></div>
+
+                <button onclick="app.toggleSidebar('chat')" class="p-4 rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white relative transition-all w-14 h-14 flex justify-center items-center">
+                    <i data-lucide="message-square" class="w-6 h-6"></i>
+                    <span id="chat-badge" class="absolute top-1 right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-zinc-900 hidden"></span>
+                </button>
+
+                <button onclick="app.toggleSidebar('people')" class="p-4 rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white relative transition-all w-14 h-14 flex justify-center items-center">
+                    <i data-lucide="users" class="w-6 h-6"></i>
+                    <span id="badge-count" class="absolute top-1 right-1 w-3 h-3 bg-red-600 rounded-full border-2 border-zinc-900 hidden"></span>
+                </button>
+
+                <button onclick="app.toggleSidebar('info')" class="p-4 rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white transition-all w-14 h-14 flex justify-center items-center">
+                    <i data-lucide="info" class="w-6 h-6"></i>
+                </button>
+
+                <button onclick="app.leaveRoom()" class="ml-4 p-4 rounded-full bg-red-600 text-white hover:bg-red-700 transition-all w-16 h-14 flex justify-center items-center shadow-xl">
+                    <i data-lucide="phone-off" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </footer>
+    </div>
+
+
+<div id="custom-prompt-modal" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div class="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl scale-100 transition-transform">
+            <h3 id="prompt-title" class="text-lg font-bold text-white mb-2">Pergunta</h3>
+            <p id="prompt-message" class="text-zinc-400 text-sm mb-4 hidden"></p>
+            <input id="prompt-input" type="text" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-white focus:border-blue-500 outline-none mb-6" autocomplete="off">
+            <div class="flex gap-3">
+                <button id="prompt-cancel" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-2.5 rounded-xl transition-colors">Cancelar</button>
+                <button id="prompt-confirm" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl transition-colors">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="custom-confirm-modal" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div class="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <div class="flex flex-col items-center text-center">
+                <div class="w-12 h-12 bg-yellow-500/10 rounded-full flex items-center justify-center mb-3 border border-yellow-500/20">
+                    <i data-lucide="alert-circle" class="text-yellow-500 w-6 h-6"></i>
+                </div>
+                <h3 id="confirm-title" class="text-lg font-bold text-white mb-2">Tem certeza?</h3>
+                <p id="confirm-message" class="text-zinc-400 text-sm mb-6">Essa ação não pode ser desfeita.</p>
+                <div class="flex gap-3 w-full">
+                    <button id="confirm-cancel" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-2.5 rounded-xl transition-colors">Não</button>
+                    <button id="confirm-yes" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-xl transition-colors">Sim</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Toast -->
+
+    <div id="toast" class="hidden fixed top-4 left-1/2 -translate-x-1/2 bg-zinc-800 text-white px-6 py-4 rounded-full shadow-2xl z-[200] flex items-center gap-3 text-sm font-semibold animate-bounce whitespace-nowrap border border-white/10 text-white text-white">
+
+        <i data-lucide="info" class="w-5 h-5 text-blue-400"></i> <span id="toast-msg">Mensagem</span>
+
+    </div>
+
+
+
+    <!-- SCRIPT -->
+
+    <script type="module">
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+
+        import { getAuth, signInAnonymously, onAuthStateChanged, setPersistence, browserLocalPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, serverTimestamp, deleteDoc, query, where, orderBy, addDoc, limit, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "https://esm.sh/@aws-sdk/client-s3@3.460.0?bundle";
+
+        // CONFIGURAÇÃO DO E-MAIL DO ADMINISTRADOR
+
+        const ADMIN_EMAIL = "aem.producoes.visuais@gmail.com"; 
+
+
+
+        const firebaseConfig = {
+
+            apiKey: "AIzaSyClvYKl3B8mCf3NTeqJ6nH0yXpyW7bF7K4",
+
+            authDomain: "aem-estudio-link.firebaseapp.com",
+
+            projectId: "aem-estudio-link",
+
+            storageBucket: "aem-estudio-link.firebasestorage.app",
+
+            messagingSenderId: "329732568739",
+
+            appId: "1:329732568739:web:1c5d06696dd87113dbf116"
+
+        };
+
+
+
+        const fbApp = initializeApp(firebaseConfig);
+
+        const auth = getAuth(fbApp);
+
+        const db = getFirestore(fbApp);
+
+
+
+        let currentUser = null;
+
+        let unsubParticipants = null;
+
+        let unsubMyStatus = null;
+
+        let unsubMeetings = null;
+
+        let unsubSignals = null;
+
+        let unsubReactions = null;
+
+        let audioContext;
+
+        let pendingAction = null; 
+
+
+
+        // CONFIGURAÇÃO WEBRTC - EXPANDIDA PARA MELHOR CONECTIVIDADE
+
+        const rtcConfig = {
+
+            iceServers: [
+
+                { urls: [
+
+                    'stun:stun.l.google.com:19302',
+
+                    'stun:stun1.l.google.com:19302',
+
+                    'stun:stun2.l.google.com:19302',
+
+                    'stun:stun3.l.google.com:19302',
+
+                    'stun:stun4.l.google.com:19302'
+
+                ]}
+
+            ],
+
+            iceCandidatePoolSize: 10
+
+        };
+
+
+// --- CONFIGURAÇÃO DO CLOUDFLARE R2 ---
+const R2_ACCOUNT_ID = "2ece542306d80259e71a793d20f91a60";
+const R2_BUCKET = "test03";
+const R2_PUBLIC_URL = "https://pub-263c6a7252164111a104a68e6835cfc4.r2.dev";
+
+// --- CÓDIGO ANTIGO (PARA APAGAR) ---
+const r2Client = new S3Client({
+    region: "auto",
+    endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+        accessKeyId: "8b2bdfc3ca8a06abca55b3400ff3368b", 
+        secretAccessKey: "81c45003d77b280e8bc4196834d40ddb53364088621baac73b205f25686af089"
+    }
+});
+// --- FUNÇÕES DE ARMAZENAMENTO ---
+
+// 1. Função de Upload
+async function uploadToR2(file, folder = "uploads") {
+    try {
+        // Cria um nome único para o arquivo (timestamp + nome original limpo)
+        const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, "_");
+        const fileName = `${folder}/${Date.now()}_${cleanName}`;
+
+        const command = new PutObjectCommand({
+            Bucket: R2_BUCKET,
+            Key: fileName,
+            Body: file,
+            ContentType: file.type // Importante para o arquivo abrir certo no navegador
+        });
+
+        console.log("Iniciando upload para R2...");
+        await r2Client.send(command);
+        console.log("Upload concluído!");
+
+        // Retorna o objeto com o Link Público e o Caminho (Key) para poder deletar depois
+        return {
+            success: true,
+            downloadUrl: `${R2_PUBLIC_URL}/${fileName}`,
+            filePath: fileName // Guarde isso no Firebase para poder deletar depois!
+        };
+
+    } catch (error) {
+        console.error("Erro no Upload R2:", error);
+        alert("Erro ao enviar arquivo: " + error.message);
+        return { success: false };
+    }
+}
+
+// 2. Função de Exclusão
+async function deleteFromR2(filePath) {
+    if (!filePath) return;
+
+    try {
+        const command = new DeleteObjectCommand({
+            Bucket: R2_BUCKET,
+            Key: filePath // O caminho exato do arquivo (ex: uploads/12345_foto.jpg)
+        });
+
+        console.log("Deletando do R2:", filePath);
+        await r2Client.send(command);
+        console.log("Arquivo deletado com sucesso do R2.");
+        return true;
+
+    } catch (error) {
+        console.error("Erro ao deletar do R2:", error);
+        return false;
+    }
+}
+
+// Disponibiliza globalmente para usar no HTML se precisar
+window.r2Service = { uploadToR2, deleteFromR2 };
+
+
+        const app = {
+
+            state: {
+
+                meetingCode: '',
+
+                isHost: false,
+
+                isAdmin: false,
+
+                stream: null,
+
+                audioEnabled: true,
+
+                videoEnabled: true,
+
+                isScreenSharing: false,
+
+                handRaised: false,
+
+                selectedDate: new Date(),
+
+                selectedTime: null,
+
+                guestName: '',
+
+                waitingCount: 0,
+
+                peers: {}, 
+
+                remoteStreams: {},
+
+                sidebar: '',
+
+                candidatesQueue: {},
+
+                peersConnectionIds: {}
+
+            },
+
+
+
+            init: function() {
+
+                const savedEmail = localStorage.getItem('admin_email');
+
+                if (savedEmail === ADMIN_EMAIL) {
+
+                    this.state.isAdmin = true;
+this.makeDraggable('draggable-wrapper');
+                }
+
+
+
+                if (window.location.protocol === 'file:') {
+
+                    alert('Atenção: Este aplicativo precisa ser rodado em um servidor local (http/https) para funcionar corretamente. O protocolo file:// não suporta autenticação do Google.');
+
+                }
+
+
+
+                this.updateClock();
+
+                setInterval(() => this.updateClock(), 1000);
+
+                lucide.createIcons();
+
+                const params = new URLSearchParams(window.location.search);
+
+                const room = params.get('room');
+
+                const guestName = params.get('guest');
+
+                if (room) {
+
+                    this.state.meetingCode = room;
+
+                    document.getElementById('input-code').value = room;
+
+                    if(guestName) document.getElementById('lobby-name-input').value = decodeURIComponent(guestName);
+
+                    this.autoJoin = true;
+
+                }
+
+                
+
+                
+
+                // Tentativa robusta de login
+
+                setPersistence(auth, browserLocalPersistence)
+
+                    .catch(() => setPersistence(auth, inMemoryPersistence))
+
+                    .then(() => signInAnonymously(auth))
+
+                    .catch(e => {
+
+                        console.error(e);
+
+                        this.toast("Erro login: " + e.message);
+
+                    });
+
+
+
+                onAuthStateChanged(auth, user => {
+
+                    if(user) {
+
+                        currentUser = user;
+
+                        this.loadScheduledMeetings();
+
+                        if(this.autoJoin) this.prepareLobby();
+
+                    }
+
+                });
+
+            },
+
+
+
+// FUNÇÃO PARA TORNAR O BOTÃO ARRASTÁVEL (CORRIGIDA)
+            makeDraggable: function(elId) {
+                const el = document.getElementById(elId);
+                if(!el) return;
+
+                let isDragging = false;
+                let startX, startY, initialLeft, initialTop;
+                
+                // Variável para saber se o elemento já foi movido alguma vez
+                let hasMoved = false;
+
+                const startDrag = (e) => {
+                    if(e.target.closest('button') && !isDragging) {
+                        // Permite clique normal nos botões
+                    }
+                    
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+                    startX = clientX;
+                    startY = clientY;
+                    
+                    const rect = el.getBoundingClientRect();
+                    
+                    // Se for a primeira vez, pega a posição real atual
+                    if (!hasMoved) {
+                        initialLeft = rect.left;
+                        initialTop = rect.top;
+                    } else {
+                        initialLeft = el.offsetLeft;
+                        initialTop = el.offsetTop;
+                    }
+                    
+                    isDragging = true;
+                };
+
+                const doDrag = (e) => {
+                    if (!isDragging) return;
+                    e.preventDefault(); 
+
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+                    const dx = clientX - startX;
+                    const dy = clientY - startY;
+
+                    // Ao mover, removemos as propriedades de posicionamento fixo do CSS (bottom/right)
+                    // e passamos a usar top/left absolutos
+                    el.style.bottom = 'auto';
+                    el.style.right = 'auto';
+                    
+                    // Se for a primeira vez movendo, precisamos garantir que o left/top estão setados
+                    if (!hasMoved) {
+                         // Define a posição inicial baseada no retângulo antes de somar o deslocamento
+                         // Isso evita o "pulo" inicial
+                         hasMoved = true;
+                    }
+
+                    el.style.left = `${initialLeft + dx}px`;
+                    el.style.top = `${initialTop + dy}px`;
+                };
+
+                const stopDrag = () => { isDragging = false; };
+
+                // Adiciona listeners no container inteiro para facilitar o "pega"
+                const handle = document.getElementById('mobile-menu-trigger'); // Usa o botão principal como alça
+                
+                if(handle) {
+                    handle.addEventListener('mousedown', startDrag);
+                    handle.addEventListener('touchstart', startDrag, { passive: false });
+                } else {
+                    el.addEventListener('mousedown', startDrag);
+                    el.addEventListener('touchstart', startDrag, { passive: false });
+                }
+
+                document.addEventListener('mousemove', doDrag);
+                document.addEventListener('touchmove', doDrag, { passive: false });
+
+                document.addEventListener('mouseup', stopDrag);
+                document.addEventListener('touchend', stopDrag);
+            },
+
+// --- INÍCIO DO BLOCO DE FUNDO VIRTUAL (COLE AQUI) ---
+            
+            // Estado interno para o fundo virtual
+            virtualBgState: {
+                selfieSegmentation: null,
+                canvasElement: null,
+                canvasCtx: null,
+                activeBackgroundImg: null,
+                isProcessing: false,
+                originalTrack: null
+            },
+
+            // Inicializa a IA (MediaPipe)
+            initVirtualBackground: async function() {
+                if (this.virtualBgState.selfieSegmentation) return;
+
+                const selfieSegmentation = new SelfieSegmentation({locateFile: (file) => {
+                    return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
+                }});
+
+                selfieSegmentation.setOptions({
+                    modelSelection: 1,
+                    selfieMode: false,
+                });
+
+                selfieSegmentation.onResults((results) => this.onSegmentationResults(results));
+                this.virtualBgState.selfieSegmentation = selfieSegmentation;
+
+                // Canvas invisível
+                const canvas = document.createElement('canvas');
+                canvas.width = 1280;
+                canvas.height = 720;
+                this.virtualBgState.canvasElement = canvas;
+                this.virtualBgState.canvasCtx = canvas.getContext('2d');
+            },
+
+            // Processa cada quadro do vídeo
+            onSegmentationResults: function(results) {
+                const ctx = this.virtualBgState.canvasCtx;
+                const canvas = this.virtualBgState.canvasElement;
+                const img = this.virtualBgState.activeBackgroundImg;
+
+                ctx.save();
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // 1. Desenha a máscara
+                ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
+
+                // 2. Mantém apenas a pessoa onde está a máscara
+                ctx.globalCompositeOperation = 'source-in';
+                ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+                // 3. Desenha o fundo atrás
+                ctx.globalCompositeOperation = 'destination-over';
+                if (img) {
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                } else {
+                    ctx.fillStyle = '#000000'; // Se não tiver img, fundo preto
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+                ctx.restore();
+            },
+
+            // Loop de envio de vídeo
+            startBackgroundProcessing: async function(videoElement) {
+                if(this.virtualBgState.isProcessing) return;
+                this.virtualBgState.isProcessing = true;
+
+                const processFrame = async () => {
+                    if (!this.virtualBgState.isProcessing) return;
+                    if (videoElement && videoElement.videoWidth > 0) {
+                        await this.virtualBgState.selfieSegmentation.send({image: videoElement});
+                    }
+                    requestAnimationFrame(processFrame);
+                };
+                processFrame();
+            },
+
+            // Aplica o efeito
+            applyVirtualBackground: async function(imageUrl) {
+                // Carrega Imagem
+                const img = new Image();
+                img.crossOrigin = "Anonymous";
+                img.src = imageUrl;
+                await new Promise(r => img.onload = r);
+                this.virtualBgState.activeBackgroundImg = img;
+
+                // Inicia IA
+                await this.initVirtualBackground();
+
+                // Cria elemento de vídeo fonte escondido se não existir
+                let sourceVideo = document.getElementById('source-video-hidden');
+                if(!sourceVideo) {
+                    sourceVideo = document.createElement('video');
+                    sourceVideo.id = 'source-video-hidden';
+                    sourceVideo.autoplay = true;
+                    sourceVideo.playsInline = true;
+                    sourceVideo.muted = true;
+                    sourceVideo.style.display = 'none';
+                    document.body.appendChild(sourceVideo);
+                }
+
+                // Salva track original
+                if (!this.virtualBgState.originalTrack && this.state.stream) {
+                    this.virtualBgState.originalTrack = this.state.stream.getVideoTracks()[0];
+                }
+
+                // Alimenta o sourceVideo com a câmera limpa
+                if(this.state.stream) {
+                    const cleanStream = new MediaStream([this.virtualBgState.originalTrack]);
+                    sourceVideo.srcObject = cleanStream;
+                    await sourceVideo.play();
+                }
+
+                // Inicia processamento
+                this.startBackgroundProcessing(sourceVideo);
+
+                // Pega o stream processado do canvas
+                const processedStream = this.virtualBgState.canvasElement.captureStream(30);
+                const processedTrack = processedStream.getVideoTracks()[0];
+
+                // Substitui o track na chamada
+                const oldTrack = this.state.stream.getVideoTracks()[0];
+                this.state.stream.removeTrack(oldTrack);
+                this.state.stream.addTrack(processedTrack);
+
+                // Atualiza visualização local
+                document.getElementById('meeting-video').srcObject = this.state.stream;
+
+                // Atualiza peers (outras pessoas)
+                Object.values(this.state.peers).forEach(pc => {
+                    const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+                    if (sender) sender.replaceTrack(processedTrack);
+                });
+
+                this.toast("Fundo IA Aplicado!");
+            },
+
+            // NOVA FUNÇÃO UPDATEBRANDING
+            updateBranding: async function(type, inputElement) {
+                const file = inputElement.files[0];
+                if (!file) return;
+
+                const lblId = type === 'logo' ? 'lbl-logo-name' : 'lbl-bg-name';
+                document.getElementById(lblId).innerText = "Processando...";
+
+                try {
+                    const result = await window.r2Service.uploadToR2(file, "branding");
+                    
+                    if (result.success) {
+                        if (type === 'background') {
+                            // Chama a função interna de IA
+                            await this.applyVirtualBackground(result.downloadUrl);
+                            
+                            // Salva no banco (opcional, para persistência futura)
+                            await updateDoc(doc(db, `meetings/${this.state.meetingCode}/participants/${currentUser.uid}`), { 
+                                backgroundUrl: result.downloadUrl 
+                            });
+                        } else {
+                            // Lógica Logo (Normal)
+                            await updateDoc(doc(db, `meetings/${this.state.meetingCode}/participants/${currentUser.uid}`), { 
+                                logoUrl: result.downloadUrl 
+                            });
+                            this.toast("Logo atualizada!");
+                        }
+                        document.getElementById(lblId).innerText = file.name;
+                    }
+                } catch (e) {
+                    console.error(e);
+                    this.toast("Erro ao processar.");
+                    document.getElementById(lblId).innerText = "Erro.";
+                }
+            },
+            // --- FIM DO BLOCO DE FUNDO VIRTUAL ---
+
+
+
+// --- FUNÇÃO PARA REMOVER O FUNDO VIRTUAL ---
+            removeVirtualBackground: async function() {
+                // Se não estiver processando, não faz nada
+                if (!this.virtualBgState.isProcessing) return this.toast("Nenhum fundo ativo.");
+
+                // 1. Para o loop de processamento da IA
+                this.virtualBgState.isProcessing = false;
+                this.virtualBgState.activeBackgroundImg = null;
+
+                // 2. Recupera a trilha original da câmera (sem fundo)
+                const originalTrack = this.virtualBgState.originalTrack;
+                
+                // Pega a trilha atual (que está com o fundo) para remover
+                const currentProcessedTrack = this.state.stream.getVideoTracks()[0];
+
+                if (originalTrack) {
+                    // Troca na stream local
+                    this.state.stream.removeTrack(currentProcessedTrack);
+                    this.state.stream.addTrack(originalTrack);
+
+                    // Atualiza o elemento de vídeo local para mostrar a câmera limpa
+                    const localVid = document.getElementById('meeting-video');
+                    if(localVid) localVid.srcObject = this.state.stream;
+
+                    // 3. Atualiza a conexão com os outros participantes (Peers)
+                    // Troca o vídeo enviado para eles pelo original
+                    Object.values(this.state.peers).forEach(pc => {
+                        const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+                        if(sender) sender.replaceTrack(originalTrack);
+                    });
+                }
+
+                // 4. Limpa o Canvas e esconde o vídeo fonte auxiliar
+                const sourceVideo = document.getElementById('source-video-hidden');
+                if(sourceVideo) {
+                    sourceVideo.pause();
+                    sourceVideo.srcObject = null; // Libera memória
+                }
+
+                // 5. Atualiza o Banco de Dados (Remove a URL do fundo)
+                if(currentUser) {
+                    await updateDoc(doc(db, `meetings/${this.state.meetingCode}/participants/${currentUser.uid}`), {
+                        backgroundUrl: null // Define como nulo para remover
+                    });
+                }
+                
+                // Reseta o texto do input
+                document.getElementById('lbl-bg-name').innerText = "Escolher Fundo...";
+                
+                this.toast("Fundo removido!");
+            },
+
+
+            // --- FUNÇÃO DELETAR MENSAGEM + ARQUIVO (INTEGRADA COM R2 E MODAL) ---
+            deleteMessage: async function(msgId, filePath) {
+                if(!currentUser) return;
+
+                // 1. Usa seu novo modal escuro para confirmar
+                const confirmAction = await this.customConfirm(
+                    "Excluir mensagem?", 
+                    "Esta ação não pode ser desfeita e o arquivo será apagado."
+                );
+
+                // Se o usuário clicar em "Não", a função para aqui
+                if (!confirmAction) return;
+
+                try {
+                    // 2. Se tiver arquivo (filePath), deleta do Cloudflare R2 primeiro
+                    if (filePath && filePath !== 'undefined' && filePath !== 'null') {
+                        this.toast("Deletando anexo...");
+                        await window.r2Service.deleteFromR2(filePath);
+                    }
+
+                    // 3. Deleta a mensagem do banco de dados (Firestore)
+                    await deleteDoc(doc(db, `meetings/${this.state.meetingCode}/chat`, msgId));
+                    
+                    this.toast("Mensagem excluída!");
+
+                } catch (e) {
+                    console.error(e);
+                    this.toast("Erro ao excluir: " + e.message);
+                }
+            },
+
+            updateClock: function() {
+
+                const now = new Date();
+
+                const dateStr = now.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' });
+
+                const dateElement = document.getElementById('home-date');
+
+                if(dateElement) dateElement.innerText = dateStr;
+
+            },
+
+
+
+            // --- SISTEMA DE ADMIN ---
+
+            checkAdmin: function(action) {
+
+                if (this.state.isAdmin) {
+
+                    if (action === 'create') this.createMeeting();
+
+                    else if (action === 'schedule') this.openScheduleModal();
+
+                } else {
+
+                    pendingAction = action;
+
+                    document.getElementById('modal-admin-login').classList.remove('hidden');
+
+                }
+
+            },
+
+
+
+           submitAdminLogin: function() {
+                const email = document.getElementById('admin-email-input').value.trim(); // Trim remove espaços acidentais
+                
+                if (email === ADMIN_EMAIL) {
+                    localStorage.setItem('admin_email', email);
+                    this.state.isAdmin = true;
+                    this.closeModal('modal-admin-login');
+                    this.toast("Login de Admin realizado!");
+                    
+                    // RECARREGA A LISTA IMEDIATAMENTE PARA PEGAR O HISTÓRICO GLOBAL
+                    this.loadScheduledMeetings();
+                    
+                    if (pendingAction === 'create') this.createMeeting();
+                    else if (pendingAction === 'schedule') this.openScheduleModal();
+                    
+                    pendingAction = null;
+                } else {
+                    this.toast("E-mail não autorizado.");
+                }
+            },
+
+
+
+            openScheduleModal: function() {
+
+                document.getElementById('modal-schedule').classList.remove('hidden');
+
+                this.renderCalendar();
+
+                this.renderTimeSlots();
+
+            },
+
+
+
+            closeModal: function(modalId) {
+
+                document.getElementById(modalId).classList.add('hidden');
+
+            },
+
+
+
+            confirmClearAll: function() {
+
+                document.getElementById('modal-delete-confirm').classList.remove('hidden');
+
+            },
+
+
+
+            clearAllMeetings: async function() {
+
+                this.closeModal('modal-delete-confirm');
+
+                if(!currentUser) return;
+
+                try {
+
+                    const meetingsRef = query(collection(db, "meetings"), where("hostId", "==", currentUser.uid));
+
+                    const snapshot = await getDocs(meetingsRef);
+
+                    if (snapshot.empty) return this.toast("Nada para excluir.");
+
+                    const batch = writeBatch(db);
+
+                    snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+
+                    await batch.commit();
+
+                    this.toast("Excluído!");
+
+                } catch (e) { this.toast("Erro: " + e.message); }
+
+            },
+
+
+
+            changeMonth: function(offset) {
+
+                const newDate = new Date(this.state.selectedDate);
+
+                newDate.setMonth(newDate.getMonth() + offset);
+
+                this.state.selectedDate = newDate;
+
+                this.renderCalendar();
+
+            },
+
+
+
+            renderCalendar: function() {
+
+                const date = this.state.selectedDate;
+
+                const year = date.getFullYear();
+
+                const month = date.getMonth();
+
+                const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+
+                document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
+
+                const grid = document.getElementById('calendar-grid');
+
+                grid.innerHTML = '';
+
+                const firstDay = new Date(year, month, 1).getDay();
+
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                const today = new Date();
+
+                for (let i = 0; i < firstDay; i++) { grid.innerHTML += `<div class="calendar-day opacity-0 text-white"></div>`; }
+
+                for (let i = 1; i <= daysInMonth; i++) {
+
+                    const dayDate = new Date(year, month, i);
+
+                    const isPast = dayDate < today.setHours(0,0,0,0);
+
+                    const el = document.createElement('div');
+
+                    el.className = `calendar-day ${isPast ? 'disabled text-zinc-700' : 'text-zinc-300'}`;
+
+                    el.innerText = i;
+
+                    if (!isPast) {
+
+                        el.onclick = () => {
+
+                            document.querySelectorAll('.calendar-day.selected').forEach(e => e.classList.remove('selected'));
+
+                            el.classList.add('selected');
+
+                            this.state.selectedDate.setDate(i);
+
+                        };
+
+                        if(i === this.state.selectedDate.getDate()) el.classList.add('selected');
+
+                    }
+
+                    grid.appendChild(el);
+
+                }
+
+            },
+
+
+
+            renderTimeSlots: function() {
+
+                const container = document.getElementById('time-slots');
+
+                container.innerHTML = '';
+
+                for(let h = 6; h <= 24; h++) {
+
+                    const hour = h.toString().padStart(2, '0');
+
+                    if(h === 24) { this.renderTimeBtn(container, "00:00"); break; }
+
+                    this.renderTimeBtn(container, `${hour}:00`);
+
+                    this.renderTimeBtn(container, `${hour}:30`);
+
+                }
+
+            },
+
+
+
+            renderTimeBtn: function(container, time) {
+
+                const btn = document.createElement('button');
+
+                btn.className = "p-2 rounded bg-zinc-950 border border-zinc-800 text-xs text-zinc-300 hover:border-blue-500 transition text-white";
+
+                btn.innerText = time;
+
+                btn.onclick = () => {
+
+                    document.querySelectorAll('#time-slots button').forEach(b => b.classList.remove('bg-blue-600', 'text-white', 'border-blue-600'));
+
+                    btn.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
+
+                    this.state.selectedTime = time;
+
+                };
+
+                container.appendChild(btn);
+
+            },
+
+
+
+// --- NOVAS FUNÇÕES DE NOTIFICAÇÃO (UI) ---
+            
+            // Substitui o prompt() nativo
+            customPrompt: function(title, placeholder = "") {
+                return new Promise((resolve) => {
+                    const modal = document.getElementById('custom-prompt-modal');
+                    const titleEl = document.getElementById('prompt-title');
+                    const inputEl = document.getElementById('prompt-input');
+                    const btnConfirm = document.getElementById('prompt-confirm');
+                    const btnCancel = document.getElementById('prompt-cancel');
+
+                    titleEl.innerText = title;
+                    inputEl.value = "";
+                    inputEl.placeholder = placeholder;
+                    modal.classList.remove('hidden');
+                    inputEl.focus();
+
+                    // Define o que acontece ao clicar
+                    const close = (value) => {
+                        modal.classList.add('hidden');
+                        resolve(value);
+                    };
+
+                    btnConfirm.onclick = () => close(inputEl.value);
+                    btnCancel.onclick = () => close(null);
+                    
+                    // Permite dar Enter
+                    inputEl.onkeydown = (e) => { if(e.key === 'Enter') close(inputEl.value); };
+                });
+            },
+
+            // Substitui o confirm() nativo
+            customConfirm: function(title, message) {
+                return new Promise((resolve) => {
+                    const modal = document.getElementById('custom-confirm-modal');
+                    document.getElementById('confirm-title').innerText = title;
+                    document.getElementById('confirm-message').innerText = message;
+                    
+                    modal.classList.remove('hidden');
+
+                    const btnYes = document.getElementById('confirm-yes');
+                    const btnNo = document.getElementById('confirm-cancel');
+
+                    const close = (value) => {
+                        modal.classList.add('hidden');
+                        resolve(value);
+                    };
+
+                    btnYes.onclick = () => close(true);
+                    btnNo.onclick = () => close(false);
+                });
+            },
+
+
+           confirmSchedule: async function() {
+                if (!currentUser) return this.toast("Conectando...");
+                
+                const time = this.state.selectedTime;
+                const guestInput = document.getElementById('schedule-guest').value;
+                if(!time) return this.toast("Escolha o horário.");
+
+                // USANDO O NOVO PROMPT
+                const pwd = await this.customPrompt("Defina a SENHA para o agendamento:", "Senha da sala");
+                
+                if(!pwd) return this.toast("Agendamento cancelado.");
+                
+                const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+                const finalDate = new Date(this.state.selectedDate);
+                const [hours, minutes] = time.split(':');
+                finalDate.setHours(hours, minutes);
+                
+                const formattedDate = finalDate.toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'}) + ' às ' + time;
+                this.state.meetingCode = code;
+
+                const savedEmail = localStorage.getItem('admin_email');
+                const creatorEmail = (savedEmail === ADMIN_EMAIL) ? ADMIN_EMAIL : null;
+
+                try {
+                    await setDoc(doc(db, "meetings", code), {
+                        createdAt: serverTimestamp(),
+                        scheduledFor: finalDate.toISOString(),
+                        displayDate: formattedDate,
+                        guestName: guestInput,
+                        hostId: currentUser.uid,
+                        adminEmail: creatorEmail,
+                        password: pwd,
+                        autoAdmit: false, 
+                        active: true
+                    });
+                    
+                    this.closeModal('modal-schedule');
+                    this.generateInviteMessage(code, formattedDate, guestInput);
+                    if(creatorEmail) this.loadScheduledMeetings();
+
+                } catch (e) { this.toast("Erro: " + e.message); }
+            },
+
+
+
+            generateInviteMessage: function(code, date, guest) {
+                const guestName = guest ? guest : "Convidado";
+                const guestParam = guest ? `&guest=${encodeURIComponent(guest)}` : '';
+                // Adicionei o parâmetro auto=true se você quiser implementar lógica extra no futuro, mas o link já leva direto
+                const link = `https://a-m-studio-link.vercel.app/?room=${code}${guestParam}`;
+                
+                // Nova mensagem personalizada
+                const message = `🎬 *A&M STUDIO LINK*\n\n📅 Data: *${date}*\n\n🔗 *Clique para entrar automaticamente:*\n${link}\n\n🔑 Código de acesso (se precisar): *${code}*`;
+                
+                const textArea = document.getElementById('invite-text');
+                if (textArea) textArea.value = message;
+                document.getElementById('modal-invite').classList.remove('hidden');
+                lucide.createIcons();
+            },
+
+
+
+            copyInviteText: function() {
+
+                const text = document.getElementById('invite-text');
+
+                text.select();
+
+                document.execCommand('copy');
+
+                this.toast("Copiado!");
+
+            },
+
+
+
+            startScheduledMeeting: function() {
+
+                this.closeModal('modal-invite');
+
+                this.prepareLobby();
+
+            },
+
+
+
+          // ✅ SUBSTITUA A FUNÇÃO loadScheduledMeetings INTEIRA POR ESTA:
+            loadScheduledMeetings: function() {
+                if(!currentUser) return;
+                if(unsubMeetings) unsubMeetings();
+
+                const savedEmail = localStorage.getItem('admin_email');
+                let meetingsRef;
+
+                if (savedEmail === ADMIN_EMAIL) {
+                    meetingsRef = query(collection(db, "meetings"), where("adminEmail", "==", ADMIN_EMAIL));
+                } else {
+                    meetingsRef = query(collection(db, "meetings"), where("hostId", "==", currentUser.uid));
+                }
+
+                unsubMeetings = onSnapshot(meetingsRef, (snapshot) => {
+                    const list = document.getElementById('meetings-list');
+                    if(!list) return;
+                    list.innerHTML = '';
+                    
+                    if(snapshot.empty) {
+                        list.innerHTML = '<p class="text-zinc-500 text-sm text-center py-10 text-white">Sem reuniões agendadas.</p>';
+                        return;
+                    }
+                    
+                    const meetings = [];
+                    snapshot.forEach(doc => meetings.push({ id: doc.id, ...doc.data() }));
+                    
+                    meetings.sort((a, b) => {
+                        const dateA = a.scheduledFor ? new Date(a.scheduledFor) : new Date(a.createdAt?.toDate());
+                        const dateB = b.scheduledFor ? new Date(b.scheduledFor) : new Date(b.createdAt?.toDate());
+                        return dateA - dateB;
+                    });
+
+                    meetings.forEach(m => {
+                        if(!m.active) return;
+                        const div = document.createElement('div');
+                        div.className = "bg-zinc-800/50 border border-zinc-700 rounded-xl p-3 mb-2 text-white";
+                        
+                        let dateDisplay = m.displayDate;
+                        if(!dateDisplay && m.createdAt) dateDisplay = new Date(m.createdAt.toDate()).toLocaleDateString('pt-BR');
+
+                        const showPassword = (savedEmail === ADMIN_EMAIL && m.password) 
+                            ? `<span class="text-yellow-500 text-[10px] block mt-1">🔑 Senha: ${m.password}</span>` 
+                            : '';
+
+                        // TRUQUE: Passamos a senha m.password dentro do onclick do enterScheduled e do deleteMeeting
+                        // Se a senha não existir (antiga), passamos 'null' string para não quebrar o JS
+                        const safePwd = m.password ? m.password : '';
+
+                        div.innerHTML = `
+                            <div class="flex justify-between items-start mb-2 text-white">
+                                <div class="overflow-hidden text-white">
+                                    <h4 class="font-bold text-white text-base truncate">${m.guestName || 'Reunião'}</h4>
+                                    <p class="text-blue-400 text-xs">${dateDisplay || 'Agora'}</p>
+                                    ${showPassword} 
+                                </div>
+                                <span class="text-[10px] font-mono text-zinc-500">${m.id}</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="app.enterScheduled('${m.id}', '${safePwd}')" class="flex-1 bg-blue-600 text-white text-xs font-bold py-2 rounded transition-all hover:bg-blue-500">Entrar</button>
+                                
+                                <button onclick="app.copyLinkManual('${m.id}', '${m.guestName || ''}')" class="bg-zinc-700 text-white p-2 rounded hover:bg-zinc-600" title="Copiar Link">
+                                    <i data-lucide="copy" class="w-3 h-3 text-white"></i>
+                                </button>
+
+                                <button onclick="app.deleteMeeting('${m.id}', '${safePwd}')" class="bg-red-900/30 border border-red-900 text-red-500 p-2 rounded hover:bg-red-600 hover:text-white transition-colors" title="Excluir">
+                                    <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        `;
+                        list.appendChild(div);
+                    });
+                    lucide.createIcons();
+                });
+            },
+
+
+deleteMeeting: async function(meetingId, storedPassword) {
+                if(!currentUser) return;
+
+                // LÓGICA DE EXCLUSÃO COM MODAIS CUSTOMIZADOS
+                
+                // CASO 1: Reunião tem senha
+                if (storedPassword && storedPassword !== 'undefined' && storedPassword !== '') {
+                    const input = await this.customPrompt("Digite a senha para EXCLUIR:", "Senha da sala");
+                    if (input !== storedPassword) {
+                        return this.toast("Senha incorreta. Não excluído.");
+                    }
+                } 
+                // CASO 2: Sem senha (antiga)
+                else {
+                    const confirm = await this.customConfirm("Excluir reunião antiga?", "Essa reunião não tem senha. Deseja apagar?");
+                    if(!confirm) return;
+                }
+
+                try {
+                    await deleteDoc(doc(db, "meetings", meetingId));
+                    this.toast("Reunião excluída com sucesso!");
+                } catch (e) {
+                    console.error(e);
+                    this.toast("Erro ao excluir: " + e.message);
+                }
+            },
+
+
+
+           enterScheduled: async function(code, storedPassword) {
+                // Se a reunião tem senha, exige que digite
+                if (storedPassword && storedPassword !== 'undefined' && storedPassword !== 'null') {
+                    const input = await this.customPrompt("Digite a SENHA para entrar:", "Senha");
+                    
+                    if (input !== storedPassword) {
+                        return this.toast("Senha incorreta! Acesso negado.");
+                    }
+                }
+
+                // Se passou da senha (ou não tinha senha), prossegue
+                this.state.meetingCode = code;
+                this.state.isHost = true;
+                this.prepareLobby();
+            },
+
+
+
+            copyLinkManual: function(code, guest) {
+
+                const guestParam = guest ? `&guest=${encodeURIComponent(guest)}` : '';
+
+                const link = `https://a-m-studio-link.vercel.app/?room=${code}${guestParam}`;
+
+                const temp = document.createElement('textarea');
+
+                temp.value = link;
+
+                document.body.appendChild(temp);
+
+                temp.select();
+
+                document.execCommand('copy');
+
+                document.body.removeChild(temp);
+
+                this.toast("Link copiado!");
+
+            },
+
+
+
+            showView: function(id) {
+
+                document.querySelectorAll('[id^="view-"]').forEach(el => el.classList.add('hidden'));
+
+                document.getElementById(id).classList.remove('hidden');
+
+                lucide.createIcons();
+
+            },
+
+
+
+            toast: function(msg) {
+
+                const t = document.getElementById('toast');
+
+                document.getElementById('toast-msg').innerText = msg;
+
+                t.classList.remove('hidden');
+
+                setTimeout(() => t.classList.add('hidden'), 4000);
+
+            },
+
+
+
+          createMeeting: async function() {
+                if(!currentUser) return this.toast("Conectando...");
+                
+                // USANDO O NOVO PROMPT
+                const pwd = await this.customPrompt("Crie uma SENHA para esta sala:", "Senha obrigatória");
+                
+                if(!pwd) return this.toast("Criação cancelada.");
+
+                const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+                
+                const savedEmail = localStorage.getItem('admin_email');
+                const creatorEmail = (savedEmail === ADMIN_EMAIL) ? ADMIN_EMAIL : null;
+
+                try {
+                    await setDoc(doc(db, "meetings", code), {
+                        hostId: currentUser.uid,
+                        adminEmail: creatorEmail,
+                        password: pwd, 
+                        createdAt: serverTimestamp(),
+                        autoAdmit: false,
+                        active: true
+                    });
+                    
+                    this.toast("Sala criada! Clique em ENTRAR na lista abaixo.");
+                    this.loadScheduledMeetings(); 
+
+                } catch(e) { this.toast("Erro ao criar."); }
+            },
+            joinMeetingFromHome: function() {
+
+                const code = document.getElementById('input-code').value.toUpperCase();
+
+                if(!code) return this.toast("Código?");
+
+                this.state.meetingCode = code;
+
+                this.prepareLobby();
+
+            },
+
+
+
+            getDevices: async function() {
+
+                try {
+
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+
+                    const audioSelect = document.getElementById('audioSource');
+
+                    const videoSelect = document.getElementById('videoSource');
+
+                    if(!audioSelect || !videoSelect) return;
+
+                    audioSelect.innerHTML = '';
+
+                    videoSelect.innerHTML = '';
+
+                    devices.forEach(device => {
+
+                        const option = document.createElement('option');
+
+                        option.value = device.deviceId;
+
+                        if (device.kind === 'audioinput') {
+
+                            option.text = device.label || `Mic ${audioSelect.length + 1}`;
+
+                            audioSelect.appendChild(option);
+
+                        } else if (device.kind === 'videoinput') {
+
+                            option.text = device.label || `Cam ${videoSelect.length + 1}`;
+
+                            videoSelect.appendChild(option);
+
+                        }
+
+                    });
+
+                } catch (e) { console.error(e); }
+
+            },
+
+
+
+            changeDevice: async function() {
+
+                const audioSource = document.getElementById('audioSource').value;
+
+                const videoSource = document.getElementById('videoSource').value;
+
+                const constraints = {
+
+                    audio: { deviceId: audioSource ? { exact: audioSource } : undefined },
+
+                    video: { deviceId: videoSource ? { exact: videoSource } : undefined }
+
+                };
+
+                try {
+
+                    if (this.state.stream) this.state.stream.getTracks().forEach(track => track.stop());
+
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+                    this.state.stream = stream;
+
+                    document.getElementById('lobby-video').srcObject = stream;
+
+                    document.getElementById('meeting-video').srcObject = stream;
+
+                    
+
+                    // Atualiza peers existentes com a nova stream (importante para quando para compartilhamento)
+
+                    Object.values(this.state.peers).forEach(pc => {
+
+                        const senders = pc.getSenders();
+
+                        stream.getTracks().forEach(track => {
+
+                             const sender = senders.find(s => s.track && s.track.kind === track.kind);
+
+                             if (sender) sender.replaceTrack(track);
+
+                        });
+
+                    });
+
+                } catch (e) { console.error(e); }
+
+            },
+
+
+
+            prepareLobby: async function() {
+
+                if(!currentUser) return;
+
+                try {
+
+                    const snap = await getDoc(doc(db, "meetings", this.state.meetingCode));
+
+                    if(!snap.exists()) return this.toast("Sala inexistente.");
+
+                    const data = snap.data();
+
+                    if (data.scheduledFor) {
+
+                        const diff = new Date(data.scheduledFor).getTime() - new Date().getTime();
+
+                        if (diff > 0) this.toast(`Reunião às ${new Date(data.scheduledFor).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}.`);
+
+                    }
+
+                    this.state.isHost = (data.hostId === currentUser.uid);
+
+                    document.getElementById('lobby-code').innerText = this.state.meetingCode;
+
+                    // Força pegar stream no lobby, se não existir
+
+                    if (!this.state.stream) {
+
+                       await this.changeDevice();
+
+                    }
+
+                    this.showView('view-lobby');
+
+                } catch(e) { this.toast("Câmera bloqueada."); }
+
+            },
+
+
+
+            requestEntry: async function() {
+                const name = document.getElementById('lobby-name-input').value || "Convidado";
+                const userRef = doc(db, `meetings/${this.state.meetingCode}/participants/${currentUser.uid}`);
+                const connId = crypto.randomUUID(); 
+                
+                const meetingRef = doc(db, "meetings", this.state.meetingCode);
+                const meetingSnap = await getDoc(meetingRef);
+                
+                if (!meetingSnap.exists()) return this.toast("Erro: Sala não encontrada.");
+                const meetingData = meetingSnap.data();
+
+                let newStatus = 'waiting';
+                let isNowHost = this.state.isHost;
+
+                const savedEmail = localStorage.getItem('admin_email');
+                
+                // Se o usuário tem o e-mail de admin salvo
+                if (savedEmail === ADMIN_EMAIL) {
+                    // USA O PROMPT NOVO
+                    const inputPwd = await this.customPrompt("Admin Detectado. Senha do Host:", "Digite a senha da sala");
+                    
+                    if (inputPwd === meetingData.password) {
+                        isNowHost = true;
+                        newStatus = 'admitted';
+                        this.state.isHost = true;
+                        this.toast("Senha correta! Entrando como Host.");
+                    } else {
+                        if(inputPwd !== null) this.toast("Senha errada. Entrando como convidado.");
+                    }
+                }
+
+                if (!isNowHost) {
+                    try {
+                        const docSnap = await getDoc(userRef);
+                        if (docSnap.exists() && docSnap.data().status === 'admitted') {
+                            newStatus = 'admitted';
+                        }
+                    } catch(e) {}
+                    
+                    if (newStatus !== 'admitted' && meetingData.autoAdmit) {
+                        newStatus = 'admitted';
+                    }
+                }
+
+                await setDoc(userRef, { 
+                    name, 
+                    status: newStatus, 
+                    isHost: isNowHost,
+                    handRaised: false, 
+                    videoEnabled: this.state.videoEnabled, 
+                    audioEnabled: this.state.audioEnabled,
+                    connectionId: connId
+                });
+
+                if (newStatus === 'admitted') {
+                    this.enterMeetingRoom();
+                } else {
+                    this.showView('view-waiting');
+                    unsubMyStatus = onSnapshot(userRef, (s) => {
+                        if(s.exists() && s.data().status === 'admitted') {
+                            this.enterMeetingRoom();
+                            unsubMyStatus();
+                        }
+                    });
+                }
+            },
+
+
+            enterMeetingRoom: async function() {
+
+                this.showView('view-meeting');
+
+                
+
+                // ACORDA O CONTEXTO DE ÁUDIO (Hack para Mobile/Safari)
+
+                this.resumeAudioContext();
+
+
+
+                // Recuperação de stream se perdido (ex: reload)
+
+                if (!this.state.stream) {
+
+                    await this.changeDevice();
+
+                }
+
+
+
+                this.setupRealtimeListeners();
+
+                this.setupWebRTC();
+
+                this.setupReactions();
+
+                const link = `https://a-m-studio-link.vercel.app/?room=${this.state.meetingCode}`;
+
+                document.getElementById('meeting-link-text').innerText = link;
+
+                document.getElementById('header-room-code').innerText = this.state.meetingCode;
+
+                if(this.state.isHost) {
+
+                    document.getElementById('host-controls').classList.remove('hidden');
+
+                    document.getElementById('waiting-section').classList.remove('hidden');
+
+                }
+
+                // Monitora áudio local
+
+                if (this.state.stream) this.monitorAudio(this.state.stream, 'local-card');
+
+            },
+
+
+
+            toggleEmoji: function() { document.getElementById('emoji-menu').classList.toggle('hidden'); },
+
+            sendReaction: async function(emoji) {
+
+                document.getElementById('emoji-menu').classList.add('hidden');
+
+                this.showFloatingEmoji(emoji);
+
+                if(!currentUser) return;
+
+                await addDoc(collection(db, `meetings/${this.state.meetingCode}/reactions`), { emoji, from: currentUser.uid, ts: serverTimestamp() });
+
+            },
+
+
+
+setupChat: function() {
+                const q = query(collection(db, `meetings/${this.state.meetingCode}/chat`), orderBy('ts', 'asc'));
+                
+                onSnapshot(q, (snapshot) => {
+                    const box = document.getElementById('chat-messages');
+                    if(!box) return;
+                    
+                    let hasNew = false;
+                    
+                    // Limpa a caixa apenas na primeira carga para evitar duplicados se a lógica mudar
+                    // Mas para manter performance, vamos apenas adicionar os novos
+                    // Nota: O ideal é limpar se for reload total, mas no onSnapshot realtime:
+                    
+                    snapshot.docChanges().forEach((change) => {
+                        if (change.type === "added") {
+                            const msg = change.doc.data();
+                            const msgId = change.doc.id;
+                            const isMe = msg.fromId === currentUser.uid;
+                            // Verifica se pode deletar (é o dono OU é o Host)
+                            const canDelete = isMe || this.state.isHost || this.state.isAdmin;
+
+                            const div = document.createElement('div');
+                            div.id = `msg-${msgId}`; // ID para facilitar remoção visual se precisar
+                            div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-3 group`;
+                            
+                            // Lógica de Arquivo ou Texto
+                            let contentHtml = '';
+                            if (msg.fileUrl) {
+                                contentHtml = `
+                                    <a href="${msg.fileUrl}" target="_blank" class="flex items-center gap-2 text-blue-400 hover:text-blue-300 underline">
+                                        <i data-lucide="paperclip" class="w-4 h-4"></i> ${msg.text.replace('📎 Enviou um arquivo: ', '')}
+                                    </a>
+                                `;
+                            } else {
+                                contentHtml = msg.text;
+                            }
+
+                            div.innerHTML = `
+                                <div class="flex items-center gap-2 mb-0.5">
+                                    <span class="text-[10px] text-zinc-500 px-1">${msg.fromName}</span>
+                                    ${canDelete ? `
+                                        <button onclick="app.deleteMessage('${msgId}', '${msg.filePath || ''}')" class="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-400 transition-opacity" title="Excluir">
+                                            <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                        </button>
+                                    ` : ''}
+                                </div>
+                                <div class="${isMe ? 'bg-blue-600' : 'bg-zinc-800'} px-3 py-2 rounded-2xl text-sm max-w-[85%] break-words shadow-sm border border-white/5">
+                                    ${contentHtml}
+                                </div>
+                            `;
+                            
+                            box.appendChild(div);
+                            hasNew = true;
+                        }
+                        // Se a mensagem foi removida do banco, remove da tela
+                        if (change.type === "removed") {
+                            const el = document.getElementById(`msg-${change.doc.id}`);
+                            if(el) el.remove();
+                        }
+                    });
+                    
+                    if(hasNew) {
+                        box.scrollTop = box.scrollHeight;
+                        if(this.state.sidebar !== 'chat') document.getElementById('chat-badge').classList.remove('hidden');
+                    }
+                    lucide.createIcons();
+                });
+            },
+
+
+sendChatMessage: async function(e) {
+
+    e.preventDefault();
+
+    const input = document.getElementById('chat-input');
+
+    const text = input.value.trim();
+
+    if(!text || !currentUser) return;
+
+    
+
+    input.value = '';
+
+    const myName = document.getElementById('lobby-name-input').value || "Anônimo";
+
+    
+
+    await addDoc(collection(db, `meetings/${this.state.meetingCode}/chat`), {
+
+        text,
+
+        fromId: currentUser.uid,
+
+        fromName: myName,
+
+        ts: serverTimestamp()
+
+    });
+
+},
+
+
+// --- NOVA FUNÇÃO: DELETAR MENSAGEM ---
+            deleteMessage: async function(msgId, filePath) {
+                if(!currentUser) return;
+
+                // 1. Usa o modal escuro personalizado ao invés do confirm() feio
+                const confirmAction = await this.customConfirm(
+                    "Excluir mensagem?", 
+                    "A mensagem e os anexos serão apagados para todos."
+                );
+
+                if (!confirmAction) return;
+
+                try {
+                    // 2. Se tiver arquivo, deleta do Cloudflare R2
+                    if (filePath && filePath !== 'undefined' && filePath !== 'null') {
+                        this.toast("Deletando anexo...");
+                        if (window.r2Service) {
+                            await window.r2Service.deleteFromR2(filePath);
+                        }
+                    }
+
+                    // 3. Deleta do Banco de Dados
+                    await deleteDoc(doc(db, `meetings/${this.state.meetingCode}/chat`, msgId));
+                    this.toast("Mensagem excluída!");
+
+                } catch (e) {
+                    console.error(e);
+                    this.toast("Erro ao excluir: " + e.message);
+                }
+            },
+
+
+            setupReactions: function() {
+
+                const q = query(collection(db, `meetings/${this.state.meetingCode}/reactions`), orderBy('ts', 'desc'), limit(5));
+
+                unsubReactions = onSnapshot(q, (snap) => {
+
+                    snap.docChanges().forEach((change) => {
+
+                        if (change.type === "added") {
+
+                            const data = change.doc.data();
+
+                            if(data.ts && (Date.now() - data.ts.toMillis()) < 10000 && data.from !== currentUser.uid) this.showFloatingEmoji(data.emoji);
+
+                        }
+
+                    });
+
+                });
+
+            },
+
+            showFloatingEmoji: function(emoji) {
+
+                const container = document.getElementById('reaction-container');
+
+                const el = document.createElement('div');
+
+                el.innerText = emoji;
+
+                el.className = 'reaction-emoji';
+
+                el.style.left = Math.random() * 80 + 10 + '%';
+
+                el.style.bottom = '20%';
+
+                container.appendChild(el);
+
+                setTimeout(() => el.remove(), 2500);
+
+            },
+
+
+
+            setupWebRTC: function() {
+
+                const signalsRef = collection(db, `meetings/${this.state.meetingCode}/signals`);
+
+                const q = query(signalsRef, where('to', '==', currentUser.uid));
+
+                unsubSignals = onSnapshot(q, async (snapshot) => {
+
+                    snapshot.docChanges().forEach(async (change) => {
+
+                        if(change.type === 'added') {
+
+                            const data = change.doc.data();
+
+                            const from = data.from;
+
+                            await deleteDoc(change.doc.ref);
+
+                            if(data.type === 'offer') await this.handleOffer(from, data);
+
+                            else if(data.type === 'answer') await this.handleAnswer(from, data);
+
+                            else if(data.type === 'candidate') await this.handleCandidate(from, data);
+
+                        }
+
+                    });
+
+                });
+
+            },
+
+
+
+          createPeerConnection: function(targetId) {
+                if(this.state.peers[targetId]) return this.state.peers[targetId];
+                
+                const pc = new RTCPeerConnection(rtcConfig);
+                
+                // Adiciona tracks locais
+                if(this.state.stream) {
+                    this.state.stream.getTracks().forEach(track => pc.addTrack(track, this.state.stream));
+                }
+                
+                // ICE Candidates
+                pc.onicecandidate = async (event) => {
+                    if(event.candidate) {
+                        await addDoc(collection(db, `meetings/${this.state.meetingCode}/signals`), { 
+                            type: 'candidate', 
+                            from: currentUser.uid, 
+                            to: targetId, 
+                            candidate: event.candidate.toJSON() 
+                        });
+                    }
+                };
+                
+                // ONTRACK - Lógica de Vídeo e Tela
+                pc.ontrack = (event) => {
+                    const stream = event.streams[0] || new MediaStream([event.track]);
+                    
+                    const mainCard = document.getElementById(`card-${targetId}`);
+                    
+                    // Verifica se é vídeo
+                    if (mainCard && event.track.kind === 'video') {
+                         const mainVideo = mainCard.querySelector('video');
+                         
+                         // SE O VÍDEO NOVO TEM ID DIFERENTE DO ATUAL = É UMA TELA SENDO COMPARTILHADA
+                         if (mainVideo && mainVideo.srcObject && mainVideo.srcObject.id !== stream.id) {
+                             
+                             let screenCardId = `card-${targetId}-screen`;
+                             let screenCard = document.getElementById(screenCardId);
+                             
+                             if(!screenCard) {
+                                 screenCard = document.createElement('div');
+                                 screenCard.id = screenCardId;
+                                 // Borda verde para diferenciar tela de câmera
+                                 screenCard.className = "video-card relative bg-zinc-900 border-2 border-green-500/50 rounded-xl overflow-hidden";
+                                 screenCard.innerHTML = `
+                                    <video autoplay playsinline class="w-full h-full object-contain"></video>
+                                    <div class="absolute bottom-2 left-2 bg-green-700 px-2 py-1 rounded text-[10px] font-bold text-white z-20 shadow-lg">
+                                        Tela de ${targetId.slice(0,4)}
+                                    </div>
+                                    <div class="absolute top-2 left-2 z-20">
+                                        <button onclick="app.toggleFullScreen('${screenCardId}')" class="p-1.5 rounded-lg bg-black/50 hover:bg-black/80 text-white backdrop-blur-sm transition-colors">
+                                            <i data-lucide="maximize-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                 `;
+                                 document.getElementById('video-grid').appendChild(screenCard);
+                                 
+                                 // Atualiza Grid IMEDIATAMENTE para evitar distorção
+                                 const grid = document.getElementById('video-grid');
+                                 grid.className = `video-grid grid-${Math.min(grid.children.length, 6)}`;
+                                 lucide.createIcons();
+                             }
+                             
+                             const vid = screenCard.querySelector('video');
+                             if(vid) vid.srcObject = stream;
+
+                             // --- CORREÇÃO DO FECHAMENTO AUTOMÁTICO ---
+                             // Ouve quando a transmissão para (onended) e remove o elemento
+                             event.track.onended = () => {
+                                 const cardToRemove = document.getElementById(screenCardId);
+                                 if(cardToRemove) {
+                                     cardToRemove.remove();
+                                     // Atualiza a grid novamente para arrumar o layout
+                                     const grid = document.getElementById('video-grid');
+                                     grid.className = `video-grid grid-${Math.min(grid.children.length, 6)}`;
+                                 }
+                             };
+                             // ------------------------------------------
+
+                             return; // Retorna para não substituir a câmera principal
+                         }
+                    }
+                    
+                    // Se não for tela, é a câmera principal do usuário
+                    this.state.remoteStreams[targetId] = stream;
+                    this.attachStream(targetId);
+                };
+                
+                this.state.peers[targetId] = pc;
+                return pc;
+            },
+
+
+            attachStream: function(targetId) {
+
+                const videoEl = document.getElementById(`video-${targetId}`);
+
+                const stream = this.state.remoteStreams[targetId];
+
+                if (!videoEl || !stream) return;
+
+
+
+                // Ensure srcObject is set
+
+                if (videoEl.srcObject !== stream) {
+
+                    videoEl.srcObject = stream;
+
+                    videoEl.muted = false; // Important for remote audio
+
+                    videoEl.setAttribute('playsinline', 'true'); // iOS fix
+
+                }
+
+                
+
+                // --- AGGRESSIVE AUTOPLAY LOOP ---
+
+                // Keep trying to play until it works. Bypasses "AbortError" effectively.
+
+                const tryPlay = () => {
+
+                    if (videoEl.paused) {
+
+                        videoEl.play().catch(e => {
+
+                            if (e.name !== 'AbortError') console.log("Autoplay prevented, retrying in 1s");
+
+                            setTimeout(tryPlay, 1000); // Retry logic
+
+                        });
+
+                    }
+
+                };
+
+                tryPlay();
+
+                
+
+                // Monitor for neon effect
+
+                this.monitorAudio(stream, `card-${targetId}`);
+
+            },
+
+
+
+            // --- VAD (Voice Activity Detection) e Audio Context Resume ---
+
+            initAudioContext: function() {
+
+                if (!audioContext) {
+
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+                }
+
+            },
+
+
+
+            resumeAudioContext: function() {
+
+                this.initAudioContext();
+
+                if (audioContext.state === 'suspended') {
+
+                    audioContext.resume();
+
+                }
+
+                // Cria um oscilador silencioso e toca por um instante para desbloquear o áudio no iOS/Android
+
+                const buffer = audioContext.createBuffer(1, 1, 22050);
+
+                const source = audioContext.createBufferSource();
+
+                source.buffer = buffer;
+
+                source.connect(audioContext.destination);
+
+                if (source.start) source.start(0);
+
+                else if (source.noteOn) source.noteOn(0);
+
+            },
+
+
+
+         monitorAudio: function(stream, cardId) {
+                // 1. Garante que o contexto existe e está rodando
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+
+                // Se não tem trilha de áudio, não faz nada
+                if (!stream.getAudioTracks().length) return;
+
+                // 2. Cria o analisador
+                const source = audioContext.createMediaStreamSource(stream);
+                const analyser = audioContext.createAnalyser();
+                
+                // Configuração para detectar voz humana melhor
+                analyser.fftSize = 512; 
+                analyser.smoothingTimeConstant = 0.4; 
+                
+                source.connect(analyser);
+
+                const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                
+                // Variáveis de controle
+                let silenceCounter = 0; 
+                const SILENCE_THRESHOLD = 15; // Demora um pouco mais para apagar (evita piscar)
+                const VOLUME_THRESHOLD = 5;   // Sensibilidade (quanto menor, mais fácil acender)
+
+                const checkVolume = () => {
+                    const card = document.getElementById(cardId);
+                    
+                    // Se o card sumiu, para o loop
+                    if (!card) {
+                        try { source.disconnect(); analyser.disconnect(); } catch(e){}
+                        return; 
+                    }
+
+                    analyser.getByteFrequencyData(dataArray);
+                    
+                    // Calcula volume médio
+                    let sum = 0;
+                    for (let i = 0; i < dataArray.length; i++) {
+                        sum += dataArray[i];
+                    }
+                    const average = sum / dataArray.length;
+
+                    // Lógica de ativação
+                    if (average > VOLUME_THRESHOLD) {
+                        // Debug: Descomente abaixo para ver o volume no console se precisar
+                        // console.log("Falando! Volume:", average); 
+                        
+                        silenceCounter = 0;
+                        if (!card.classList.contains('speaking')) {
+                            card.classList.add('speaking');
+                        }
+                    } else {
+                        silenceCounter++;
+                        // Só apaga se ficar em silêncio por aprox. 250ms
+                        if (silenceCounter > SILENCE_THRESHOLD) {
+                            if (card.classList.contains('speaking')) {
+                                card.classList.remove('speaking');
+                            }
+                        }
+                    }
+
+                    requestAnimationFrame(checkVolume);
+                };
+
+                checkVolume();
+            },
+
+            // --- Fullscreen Toggle ---
+
+            toggleFullScreen: function(cardId) {
+
+                const elem = document.getElementById(cardId);
+
+                if (!elem) return;
+
+
+
+                if (!document.fullscreenElement) {
+
+                    elem.requestFullscreen().catch(err => {
+
+                        console.error(`Erro fullscreen: ${err.message}`);
+
+                    });
+
+                } else {
+
+                    document.exitFullscreen();
+
+                }
+
+            },
+
+
+
+            // --- Screen Sharing ---
+
+         toggleScreenShare: async function() {
+
+    if (this.state.isScreenSharing) {
+
+        await this.stopScreenShare();
+
+        return;
+
+    }
+
+
+
+    try {
+
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+
+        const screenTrack = screenStream.getVideoTracks()[0];
+
+        
+
+        screenTrack.onended = () => this.stopScreenShare();
+
+
+
+        // Salva referência
+
+        this.state.screenStream = screenStream;
+
+
+
+        // Adiciona a trilha para TODOS os peers conectados
+
+        // IMPORTANTE: Usamos iceRestart: true para evitar o erro de SSL Role
+
+        const promises = Object.entries(this.state.peers).map(async ([targetId, pc]) => {
+
+            pc.addTrack(screenTrack, screenStream);
+
+            
+
+            try {
+
+                const offer = await pc.createOffer({ iceRestart: true });
+
+                await pc.setLocalDescription(offer);
+
+                await addDoc(collection(db, `meetings/${this.state.meetingCode}/signals`), { 
+
+                    type: 'offer', 
+
+                    from: currentUser.uid, 
+
+                    to: targetId, 
+
+                    offer: { type: offer.type, sdp: offer.sdp } 
+
+                });
+
+            } catch (err) {
+
+                console.error("Erro ao renegociar:", err);
+
+            }
+
+        });
+
+
+
+        await Promise.all(promises);
+
+
+
+        // Mostra localmente
+
+        this.addLocalScreenCard(screenStream);
+
+
+
+        this.state.isScreenSharing = true;
+
+        this.updateBtn('btn-screen-share', true, 'monitor-up');
+
+
+
+    } catch (e) {
+
+        console.error(e);
+
+        this.toast("Erro ao compartilhar tela.");
+
+    }
+
+},
+
+
+// ✅ ADICIONE ESTA FUNÇÃO DENTRO DO APP
+            toggleBlur: async function() {
+                if (!this.state.stream) return;
+                const track = this.state.stream.getVideoTracks()[0];
+                
+                // Verifica capacidade do navegador
+                const capabilities = track.getCapabilities();
+                
+                // Se o navegador não suportar nativamente (comum em alguns celulares antigos)
+                if (!capabilities.backgroundBlur) {
+                    // Tenta forçar via constraints avançadas (alguns navegadores aceitam mesmo sem anunciar)
+                    try {
+                        this.state.isBlurred = !this.state.isBlurred;
+                        await track.applyConstraints({
+                            advanced: [{ backgroundBlur: this.state.isBlurred }]
+                        });
+                        this.updateBlurBtnStyle();
+                        this.toast(this.state.isBlurred ? "Desfoque: Ligado" : "Desfoque: Desligado");
+                    } catch(e) {
+                        this.toast("Seu dispositivo não suporta desfoque nativo.");
+                    }
+                    return;
+                }
+
+                // Caminho padrão para navegadores compatíveis
+                this.state.isBlurred = !this.state.isBlurred;
+                try {
+                    await track.applyConstraints({
+                        advanced: [{ backgroundBlur: this.state.isBlurred }]
+                    });
+                    this.updateBlurBtnStyle();
+                } catch (e) {
+                    console.error(e);
+                    this.toast("Erro ao aplicar desfoque.");
+                }
+            },
+
+            // Função visual para pintar o botão de azul quando ativo
+            updateBlurBtnStyle: function() {
+                const desktopBtn = document.getElementById('btn-blur');
+                const mobBtn = document.getElementById('btn-mob-blur');
+                const colorClass = this.state.isBlurred ? 'text-blue-500' : 'text-white';
+                
+                // Atualiza Desktop
+                if(desktopBtn) {
+                    desktopBtn.innerHTML = `<i data-lucide="aperture" class="w-6 h-6 ${colorClass}"></i>`;
+                    if(this.state.isBlurred) desktopBtn.classList.replace('text-white', 'text-blue-500'); // Força visual
+                }
+                
+                // Atualiza Mobile
+                if(mobBtn) {
+                    mobBtn.innerHTML = `<i data-lucide="aperture" class="w-5 h-5 ${colorClass}"></i>`;
+                }
+                lucide.createIcons();
+            },
+
+
+addLocalScreenCard: function(stream) {
+                const grid = document.getElementById('video-grid');
+                const div = document.createElement('div');
+                div.id = 'local-screen-card';
+                // Removemos o CSS inline antigo e usamos a classe video-card
+                div.className = "video-card border-2 border-blue-500/50"; 
+                div.innerHTML = `
+                    <video autoplay muted playsinline class="w-full h-full object-cover"></video>
+                    <div class="absolute bottom-2 left-2 bg-blue-600 px-2 py-1 rounded text-[10px] font-bold text-white z-20">Sua Tela</div>
+                `;
+                grid.appendChild(div);
+                div.querySelector('video').srcObject = stream;
+                
+                // Força atualização da Grid
+                grid.className = `video-grid grid-${Math.min(grid.children.length, 6)}`;
+                lucide.createIcons();
+            },
+
+
+
+stopScreenShare: async function() {
+                // 1. Para as trilhas de vídeo da tela
+                if(this.state.screenStream) {
+                    this.state.screenStream.getTracks().forEach(t => t.stop());
+                    this.state.screenStream = null;
+                }
+                
+                // 2. Remove o cartão local da sua tela
+                const localCard = document.getElementById('local-screen-card');
+                if(localCard) localCard.remove();
+
+                // 3. ATUALIZA A GRID (CORREÇÃO DO BUG VISUAL)
+                // Isso força o CSS a redistribuir os vídeos restantes corretamente
+                const grid = document.getElementById('video-grid');
+                if(grid) {
+                    grid.className = `video-grid grid-${Math.min(grid.children.length, 6)}`;
+                }
+
+                // 4. Reseta estado dos botões
+                this.state.isScreenSharing = false;
+                this.updateBtn('btn-screen-share', false, 'monitor-up');
+                
+                // 5. Arruma a sua câmera (Espelhamento e Ajuste)
+                const myVideo = document.getElementById('meeting-video');
+                if(myVideo) {
+                    myVideo.classList.add('video-mirror'); // Volta a ser espelho
+                    // Força um pequeno reflow para limpar glitchs gráficos
+                    myVideo.style.display = 'none';
+                    myVideo.offsetHeight; // trigger reflow
+                    myVideo.style.display = 'block';
+                }
+                
+                // 6. Garante que a câmera seja reconectada
+                await this.changeDevice();
+            },
+
+
+            stopScreenShare: async function() {
+
+                // Remove o track de tela
+
+                const screenTrack = this.state.stream.getVideoTracks()[0];
+
+                if (screenTrack) {
+
+                    screenTrack.stop();
+
+                    this.state.stream.removeTrack(screenTrack);
+
+                }
+
+                this.state.isScreenSharing = false;
+
+                this.updateBtn('btn-screen-share', false, 'monitor-up');
+
+                
+
+                // Volta espelhamento
+
+                document.getElementById('meeting-video').classList.add('video-mirror');
+
+                
+
+                // Reativa a câmera
+
+                await this.changeDevice();
+
+            },
+
+
+
+           initiateCall: async function(targetId) {
+                const pc = this.createPeerConnection(targetId);
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                await addDoc(collection(db, `meetings/${this.state.meetingCode}/signals`), { type: 'offer', from: currentUser.uid, to: targetId, offer: { type: offer.type, sdp: offer.sdp } });
+            },
+
+            // --- SUBSTITUA A FUNÇÃO HANDLEANSWER POR ESTA VERSÃO COMPLETA ---
+            handleAnswer: async function(fromId, data) {
+                const pc = this.state.peers[fromId];
+                if (pc) {
+                    try {
+                        console.log("Processando Answer de:", fromId);
+                        await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+
+                        // ✅ PARTE NOVA: LIBERA A FILA DE CONEXÃO (ISSO VAI LIGAR O VÍDEO)
+                        if (this.state.candidatesQueue[fromId]) {
+                            console.log("Liberando candidatos da fila para:", fromId);
+                            this.state.candidatesQueue[fromId].forEach(async (c) => {
+                                try { 
+                                    await pc.addIceCandidate(new RTCIceCandidate(c)); 
+                                } catch(e) { 
+                                    console.error("Erro ao adicionar candidato fila:", e); 
+                                }
+                            });
+                            // Limpa a fila para não adicionar duplicado
+                            delete this.state.candidatesQueue[fromId];
+                        }
+                        // ✅ FIM DA PARTE NOVA
+
+                    } catch (error) {
+                        console.error("Erro ao processar Answer:", error);
+                    }
+                }
+            },
+            // ---------------------------------------------------------------
+  
+
+            handleOffer: async function(fromId, data) {
+
+    let pc = this.state.peers[fromId];
+
+    
+
+    if(!pc) {
+
+        pc = this.createPeerConnection(fromId);
+
+    }
+
+
+
+    // PROTEÇÃO CONTRA COLISÃO (Glare)
+
+    // Se já estamos tentando enviar algo (have-local-offer) e recebemos uma oferta...
+
+    if (pc.signalingState !== "stable") {
+
+        // Se eu sou o "menor" ID, eu cedo e aceito a oferta (Polite Peer)
+
+        // Se eu sou o "maior", eu ignoro essa oferta e espero a minha ser respondida
+
+        if (currentUser.uid > fromId) {
+
+            console.log("Ignorando oferta conflitante (Impolite)");
+
+            return; 
+
+        }
+
+        // Se somos 'polite', tentamos reverter para aceitar a nova oferta
+
+        if (pc.signalingState === "have-local-offer") {
+
+             try {
+
+                 await pc.setLocalDescription({type: "rollback"});
+
+             } catch(e) { console.log("Rollback não suportado, continuando..."); }
+
+        }
+
+    }
+
+    
+
+    try {
+
+        await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+
+        
+
+        // Processa candidatos na fila
+
+        if (this.state.candidatesQueue[fromId]) {
+
+            this.state.candidatesQueue[fromId].forEach(async (c) => {
+
+                try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch(e){}
+
+            });
+
+            delete this.state.candidatesQueue[fromId];
+
+        }
+
+        
+
+        const answer = await pc.createAnswer();
+
+        await pc.setLocalDescription(answer);
+
+        await addDoc(collection(db, `meetings/${this.state.meetingCode}/signals`), { 
+
+            type: 'answer', 
+
+            from: currentUser.uid, 
+
+            to: fromId, 
+
+            answer: { type: answer.type, sdp: answer.sdp } 
+
+        });
+
+    } catch (error) {
+
+        console.error("Erro ao processar oferta:", error);
+
+    }
+
+},
+
+handleCandidate: async function(fromId, data) {
+                const pc = this.state.peers[fromId];
+                if(pc) {
+                    if (pc.remoteDescription) {
+                        try {
+                            await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+                        } catch(e) { console.error("Erro ao adicionar candidato", e); }
+                    } else {
+                        if (!this.state.candidatesQueue[fromId]) this.state.candidatesQueue[fromId] = [];
+                        this.state.candidatesQueue[fromId].push(data.candidate);
+                    }
+                }
+            },
+
+handleCandidate: async function(fromId, data) {
+                const pc = this.state.peers[fromId];
+                if(pc) {
+                    if (pc.remoteDescription) {
+                        try {
+                            await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+                        } catch(e) { console.error("Erro ao adicionar candidato", e); }
+                    } else {
+                        if (!this.state.candidatesQueue[fromId]) this.state.candidatesQueue[fromId] = [];
+                        this.state.candidatesQueue[fromId].push(data.candidate);
+                    }
+                }
+            },
+
+
+         setupRealtimeListeners: function() {
+                const partRef = collection(db, `meetings/${this.state.meetingCode}/participants`);
+                unsubParticipants = onSnapshot(partRef, (snapshot) => {
+                    const activeList = document.getElementById('participants-list');
+                    const waitList = document.getElementById('waiting-list');
+                    const grid = document.getElementById('video-grid');
+
+                    if(!activeList || !grid) return;
+
+                    activeList.innerHTML = '';
+                    waitList.innerHTML = '';
+
+                    let waitingCount = 0;
+                    const currentParticipants = []; 
+                    
+                    snapshot.forEach(d => {
+                        const p = d.data();
+                        const pid = d.id;
+                        const isMe = (pid === currentUser.uid);
+                        
+                        if(p.status === 'admitted') {
+                            currentParticipants.push(pid);
+                            
+                            // 1. Lista Lateral
+                            const div = document.createElement('div');
+                            div.className = "flex items-center p-2 bg-zinc-900 rounded-lg mb-1 text-white";
+                            div.innerHTML = `
+                                <div class="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center font-bold text-xs mr-2 text-white">${p.name[0]}</div>
+                                <span class="text-xs font-medium text-white truncate max-w-[100px]">${isMe ? 'Você' : p.name}</span>
+                                ${p.isHost ? '<span class="bg-blue-600 text-[9px] px-1 rounded text-white ml-auto">HOST</span>' : ''}
+                                ${p.handRaised ? '<i data-lucide="hand" class="text-yellow-500 w-3 h-3 ml-2"></i>' : ''}
+                            `;
+                            activeList.appendChild(div);
+                            
+                            // 2. Criação/Atualização do Card de Vídeo
+                            let card = document.getElementById(`card-${pid}`);
+                            
+                            if(!card) {
+                                card = document.createElement('div');
+                                card.id = `card-${pid}`;
+                                card.className = "video-card relative text-white transition-all duration-300"; 
+                                card.innerHTML = `
+                                    <video id="video-${pid}" autoplay playsinline webkit-playsinline class="w-full h-full"></video>
+                                    
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center z-10 ${p.videoEnabled === false ? '' : 'hidden'}" id="placeholder-${pid}">
+                                        <div class="w-16 h-16 rounded-full bg-zinc-700 flex items-center justify-center text-2xl font-bold mb-2 text-white border-4 border-zinc-800 shadow-xl">${p.name[0]}</div>
+                                        <span class="text-white text-sm font-bold drop-shadow-md">${p.name}</span>
+                                    </div>
+                                    
+                                    <div class="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-white z-20 shadow-lg flex items-center gap-2">
+                                        ${p.name} ${isMe ? '(Você)' : ''}
+                                    </div>
+
+<div id="hand-${pid}" class="hidden absolute top-3 left-3 z-30 bg-yellow-500 p-2 rounded-full shadow-lg animate-bounce">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-black">
+        <path d="M10.5 2a1.5 1.5 0 0 0-1.5 1.5v6.25H8.5V3.5a1.5 1.5 0 0 0-3 0v6.25h-.5a2.5 2.5 0 0 0-2.5 2.5v1.28c0 3.73 2.55 6.94 6.2 7.42a7.5 7.5 0 0 0 7.8-7.45V9a1.5 1.5 0 0 0-3 0v.75h-.5V3.5a1.5 1.5 0 0 0-3 0V2z"/>
+    </svg>
+</div>
+
+                                    <div class="absolute top-3 right-12 z-30 video-card-controls">
+                                        <button onclick="app.toggleFullScreen('card-${pid}')" class="p-2 rounded-lg bg-black/40 hover:bg-black/70 text-white backdrop-blur-md transition-colors">
+                                            <i data-lucide="maximize-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+
+                                    <img id="logo-${pid}" class="brand-logo hidden" src="" alt="Logo">
+                                `;
+                                grid.appendChild(card);
+                                
+                                if(!isMe && this.state.remoteStreams[pid]) this.attachStream(pid);
+                                else if(isMe) {
+                                    const localVid = document.getElementById(`meeting-video`);
+                                    const cardVid = document.getElementById(`video-${pid}`);
+                                    if(localVid && localVid.srcObject) {
+                                        cardVid.srcObject = localVid.srcObject;
+                                        cardVid.muted = true;
+                                        cardVid.classList.add('video-mirror');
+                                    }
+                                }
+                            }
+
+                            // --- ATUALIZAÇÕES VISUAIS EM TEMPO REAL ---
+
+                            // Estado da Câmera
+                            const placeholder = document.getElementById(`placeholder-${pid}`);
+                            if(placeholder) placeholder.classList[p.videoEnabled === false ? 'remove' : 'add']('hidden');
+
+                            // Mãozinha
+                            const handEl = document.getElementById(`hand-${pid}`);
+                            if(handEl) handEl.classList[p.handRaised ? 'remove' : 'add']('hidden');
+
+                            // ✅ ATUALIZA A LOGO
+                            const logoImg = document.getElementById(`logo-${pid}`);
+                            if (p.logoUrl) {
+                                logoImg.src = p.logoUrl;
+                                logoImg.classList.remove('hidden');
+                            } else {
+                                logoImg.classList.add('hidden');
+                            }
+
+                            // ✅ ATUALIZA O FUNDO (BACKGROUND) - FORÇANDO REGRAS
+                            // Isso aplica a imagem diretamente na DIV do cartão
+                            if (p.backgroundUrl) {
+                                card.style.backgroundImage = `url('${p.backgroundUrl}')`;
+                                // Força propriedades CSS via JS para garantir
+                                card.style.backgroundSize = 'cover';
+                                card.style.backgroundPosition = 'center';
+                            } else {
+                                card.style.backgroundImage = 'none';
+                            }
+                            
+                            // Lógica de P2P
+                            if(!isMe) {
+                                if(this.state.peersConnectionIds[pid] && this.state.peersConnectionIds[pid] !== p.connectionId) {
+                                    if(this.state.peers[pid]) {
+                                        this.state.peers[pid].close();
+                                        delete this.state.peers[pid];
+                                        delete this.state.remoteStreams[pid];
+                                        const v = document.getElementById(`video-${pid}`);
+                                        if(v) v.srcObject = null;
+                                    }
+                                }
+                                this.state.peersConnectionIds[pid] = p.connectionId;
+                                if(currentUser.uid < pid && !this.state.peers[pid]) this.initiateCall(pid);
+                            }
+
+                        } else if(p.status === 'waiting' && this.state.isHost) {
+                            waitingCount++;
+                            const wDiv = document.createElement('div');
+                            wDiv.className = "flex items-center justify-between p-2 bg-zinc-800/50 border border-yellow-500/20 rounded-lg mb-1 text-white";
+                            wDiv.innerHTML = `<span class="text-xs text-white truncate max-w-[100px] text-white">${p.name}</span><button onclick="app.admitUser('${pid}')" class="bg-green-600 px-2 py-1 rounded text-[10px] font-bold text-white">Aceitar</button>`;
+                            waitList.appendChild(wDiv);
+                        }
+                    });
+                    
+                    // Limpeza
+                    Array.from(grid.children).forEach(child => {
+                        if(child.id !== 'local-screen-card' && !child.id.endsWith('-screen')) {
+                            const uid = child.id.replace('card-', '');
+                            if(!currentParticipants.includes(uid)) {
+                                child.remove();
+                                if(this.state.peers[uid]) { this.state.peers[uid].close(); delete this.state.peers[uid]; delete this.state.remoteStreams[uid]; }
+                            }
+                        }
+                    });
+                    
+                    const badge = document.getElementById('badge-count');
+                    if(waitingCount > 0) { badge.classList.remove('hidden'); document.getElementById('waiting-section').classList.remove('hidden'); }
+                    else { badge.classList.add('hidden'); document.getElementById('waiting-section').classList.add('hidden'); }
+                    this.state.waitingCount = waitingCount;
+
+                    const totalItems = grid.children.length;
+                    grid.className = `video-grid grid-${Math.min(totalItems, 6)}`;
+                    lucide.createIcons();
+                });
+            },
+
+
+
+            admitUser: async function(uid) { await updateDoc(doc(db, `meetings/${this.state.meetingCode}/participants/${uid}`), { status: 'admitted' }); },
+
+            toggleAutoAdmit: async function() {
+
+                const icon = document.getElementById('icon-auto-admit');
+
+                const isLocked = icon.getAttribute('data-lucide') === 'lock';
+
+                await updateDoc(doc(db, "meetings", this.state.meetingCode), { autoAdmit: isLocked });
+
+                if(isLocked) { icon.setAttribute('data-lucide', 'unlock'); icon.classList.replace('text-red-500', 'text-green-500'); this.toast("Liberado"); }
+
+                else { icon.setAttribute('data-lucide', 'lock'); icon.classList.replace('text-green-500', 'text-red-500'); this.toast("Bloqueado"); }
+
+                lucide.createIcons();
+
+            },
+
+
+
+            toggleAudio: async function() {
+                this.state.audioEnabled = !this.state.audioEnabled;
+                if(this.state.stream) this.state.stream.getAudioTracks()[0].enabled = this.state.audioEnabled;
+                
+                // Atualiza Desktop e Lobby
+                this.updateBtn('btn-meet-mic', this.state.audioEnabled, 'mic');
+                this.updateBtn('btn-lobby-mic', this.state.audioEnabled, 'mic');
+                
+                // ✅ NOVO: Atualiza botão do Mobile para ficar vermelho
+                this.updateBtn('btn-mob-mic', this.state.audioEnabled, 'mic');
+
+                if(currentUser && this.state.meetingCode) {
+                    await updateDoc(doc(db, `meetings/${this.state.meetingCode}/participants/${currentUser.uid}`), { audioEnabled: this.state.audioEnabled });
+                }
+            },
+
+
+
+            toggleVideo: async function() {
+                this.state.videoEnabled = !this.state.videoEnabled;
+                if(this.state.stream) this.state.stream.getVideoTracks()[0].enabled = this.state.videoEnabled;
+                
+                // Atualiza Desktop e Lobby
+                this.updateBtn('btn-meet-cam', this.state.videoEnabled, 'video');
+                this.updateBtn('btn-lobby-cam', this.state.videoEnabled, 'video');
+
+                // ✅ NOVO: Atualiza botão do Mobile para ficar vermelho
+                this.updateBtn('btn-mob-cam', this.state.videoEnabled, 'video');
+
+                const placeholder = document.getElementById('lobby-video-placeholder');
+                if(placeholder) placeholder.classList[this.state.videoEnabled ? 'add' : 'remove']('hidden');
+
+                if(currentUser && this.state.meetingCode) {
+                    await updateDoc(doc(db, `meetings/${this.state.meetingCode}/participants/${currentUser.uid}`), { videoEnabled: this.state.videoEnabled });
+                }
+            },
+
+          toggleHand: async function() {
+                this.state.handRaised = !this.state.handRaised;
+                
+                // Botão Desktop
+                const btn = document.getElementById('btn-meet-hand');
+                // Botão Mobile (Adicionamos o ID btn-mob-hand no passo 2)
+                const btnMob = document.getElementById('btn-mob-hand');
+                
+                const updateStyle = (element) => {
+                    if(!element) return;
+                    if(this.state.handRaised) { 
+                        element.classList.remove('bg-zinc-800', 'text-white');
+                        element.classList.add('bg-yellow-500', 'text-black');
+                    } else { 
+                        element.classList.remove('bg-yellow-500', 'text-black');
+                        element.classList.add('bg-zinc-800', 'text-white');
+                    }
+                };
+
+                updateStyle(btn);
+                updateStyle(btnMob);
+
+                if(currentUser) await updateDoc(doc(db, `meetings/${this.state.meetingCode}/participants/${currentUser.uid}`), { handRaised: this.state.handRaised });
+            },
+
+
+
+            updateBtn: function(id, state, iconName) {
+
+                const btn = document.getElementById(id);
+
+                if (!btn) return;
+
+                const isLobby = id.includes('lobby');
+
+                const iconClass = "w-5 h-5 md:w-6 md:h-6";
+
+                if (state) { btn.classList.remove('bg-red-600'); btn.classList.add(isLobby ? 'bg-zinc-800/80' : 'bg-zinc-800'); }
+
+                else { btn.classList.remove(isLobby ? 'bg-zinc-800/80' : 'bg-zinc-800'); btn.classList.add('bg-red-600'); }
+
+                const finalIcon = state ? iconName : iconName + '-off';
+
+                btn.innerHTML = `<i data-lucide="${finalIcon}" class="${iconClass}"></i>`;
+
+                lucide.createIcons();
+
+            },
+
+
+
+            copyLink: function() {
+
+                const link = document.getElementById('meeting-link-text').innerText;
+
+                const temp = document.createElement('textarea');
+
+                temp.value = link;
+
+                document.body.appendChild(temp);
+
+                temp.select();
+
+                document.execCommand('copy');
+
+                document.body.removeChild(temp);
+
+                this.toast("Copiado!");
+
+            },
+
+
+
+           toggleSidebar: function(panel) {
+
+    const sb = document.getElementById('sidebar');
+
+    if(!sb) return;
+
+    if(!sb.classList.contains('hidden') && this.state.sidebar === panel) { this.closeSidebar(); return; }
+
+    
+
+    sb.classList.remove('hidden');
+
+    this.state.sidebar = panel;
+
+    
+
+    // Esconde todos primeiro
+
+    document.getElementById('sidebar-content-info').classList.add('hidden');
+
+    document.getElementById('sidebar-content-people').classList.add('hidden');
+
+    document.getElementById('sidebar-content-chat').classList.add('hidden');
+
+    
+
+    // Mostra o selecionado e muda título
+
+    if(panel === 'info') { 
+
+        document.getElementById('sidebar-title').innerText = "Informações"; 
+
+        document.getElementById('sidebar-content-info').classList.remove('hidden'); 
+
+    } else if (panel === 'people') { 
+
+        document.getElementById('sidebar-title').innerText = "Participantes"; 
+
+        document.getElementById('sidebar-content-people').classList.remove('hidden'); 
+
+    } else if (panel === 'chat') {
+
+        document.getElementById('sidebar-title').innerText = "Bate-papo"; 
+
+        document.getElementById('sidebar-content-chat').classList.remove('hidden');
+
+        document.getElementById('chat-badge').classList.add('hidden'); // Limpa notificação
+
+    }
+
+},
+
+toggleMobileMenu: function() {
+                const btn = document.getElementById('mobile-menu-trigger');
+                const panel = document.getElementById('mobile-controls');
+                
+                // Toggle classes
+                btn.classList.toggle('open');
+                panel.classList.toggle('open');
+                
+                // Muda ícone
+                const icon = btn.querySelector('svg'); // Pega o SVG dentro do botão
+                if (btn.classList.contains('open')) {
+                    // Se estiver aberto, ícone vira X (fechar)
+                    btn.innerHTML = '<i data-lucide="x" class="w-8 h-8 text-white"></i>';
+                } else {
+                    // Se fechado, ícone vira + (abrir)
+                    btn.innerHTML = '<i data-lucide="plus" class="w-8 h-8 text-white"></i>';
+                }
+                lucide.createIcons();
+            },
+
+            closeSidebar: function() { const sb = document.getElementById('sidebar'); if(sb) sb.classList.add('hidden'); },
+
+            leaveRoom: function() { window.location.href = window.location.pathname; }
+
+        };
+
+
+
+        window.app = app;
+
+        window.onload = () => app.init();
+
+        
+    </script>
+
+</body>
+
+</html>
